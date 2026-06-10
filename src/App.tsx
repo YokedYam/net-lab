@@ -33,6 +33,9 @@ import { EventLog } from './components/EventLog';
 import { HelpModal } from './components/HelpModal';
 import { PacketFlight } from './components/PacketFlight';
 import { DemoFlight } from './components/DemoFlight';
+import { QuizMode } from './components/QuizMode';
+import { Flashcards } from './components/Flashcards';
+import { PbqMode } from './components/PbqMode';
 
 const NIC_LIMIT: Record<DeviceType, number> = {
   laptop: 1,
@@ -45,6 +48,14 @@ const NIC_LIMIT: Record<DeviceType, number> = {
 
 const DEVICE_TOOLS: DeviceType[] = ['laptop', 'pc', 'server', 'switch', 'router', 'firewall'];
 const isDeviceTool = (t: Tool): t is DeviceType => DEVICE_TOOLS.includes(t as DeviceType);
+
+type Section = 'lab' | 'quiz' | 'flashcards' | 'pbq';
+const SECTIONS: { id: Section; label: string }[] = [
+  { id: 'lab', label: 'Visual Lab' },
+  { id: 'quiz', label: 'Quiz' },
+  { id: 'flashcards', label: 'Flashcards' },
+  { id: 'pbq', label: 'PBQs' },
+];
 
 interface Point {
   x: number;
@@ -239,6 +250,7 @@ export default function App() {
   const [caption, setCaption] = useState<string | null>(null);
   const [demoFlights, setDemoFlights] = useState<ActiveDemoFlight[] | null>(null);
   const [demoHighlight, setDemoHighlight] = useState<Set<string> | null>(null);
+  const [section, setSection] = useState<Section>('lab');
 
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -287,7 +299,7 @@ export default function App() {
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, []);
+  }, [section]);
 
   const zoomBy = (f: number) => {
     const el = wrapRef.current;
@@ -410,6 +422,13 @@ export default function App() {
       sandboxRef.current = null;
     }
     setSelectedId(null);
+  };
+
+  // Jump from a quiz/flashcard/PBQ straight into the matching Learn demo.
+  const goToResource = (conceptId: string) => {
+    setTab('learn');
+    enterDemo(conceptId);
+    setSection('lab');
   };
 
   const handsOn = () => {
@@ -684,25 +703,47 @@ export default function App() {
           <span className="brand-dot" />
           <div>
             <div className="brand-title">Net+ Visual Lab</div>
-            <div className="brand-sub">a tiny Packet Tracer — click, cable, ping</div>
+            <div className="brand-sub">learn networking by seeing it move</div>
           </div>
         </div>
+        <nav className="sectionnav">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.id}
+              className={section === s.id ? 'snav active' : 'snav'}
+              onClick={() => setSection(s.id)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </nav>
         <div className="topbar-right">
-          <span className="counts">
-            {devices.length} devices · {links.length} cables · {net.segments.length} networks
-          </span>
-          <button className="btn" onClick={loadDemo}>
-            Starter
-          </button>
-          <button className="btn" onClick={clearAll}>
-            Clear
-          </button>
+          {section === 'lab' && (
+            <>
+              <span className="counts">
+                {devices.length} devices · {links.length} cables · {net.segments.length} networks
+              </span>
+              <button className="btn" onClick={loadDemo}>
+                Starter
+              </button>
+              <button className="btn" onClick={clearAll}>
+                Clear
+              </button>
+            </>
+          )}
           <button className="btn accent" onClick={() => setShowHelp(true)}>
             Help
           </button>
         </div>
       </header>
-      <div className="main">
+      {section === 'quiz' ? (
+        <QuizMode onResource={goToResource} />
+      ) : section === 'flashcards' ? (
+        <Flashcards onResource={goToResource} />
+      ) : section === 'pbq' ? (
+        <PbqMode onResource={goToResource} />
+      ) : (
+        <div className="main">
         <Toolbar
           tab={tab}
           onTab={onTab}
@@ -871,6 +912,7 @@ export default function App() {
           <EventLog log={log} onClear={() => setLog([])} />
         </aside>
       </div>
+      )}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
     </div>
   );
