@@ -4,6 +4,16 @@ A tiny, dark-mode Cisco Packet Tracer for learning networking — inspired by Te
 "Network Lab 101" visuals. Place devices, cable them together, and ping: a glowing packet hops
 the path while the event log narrates what every switch, router, and firewall is doing.
 
+**Live:** https://black-plant-0cfd8ca10.7.azurestaticapps.net
+
+## Two modes
+
+- **Build** — free sandbox: place, cable, inspect, ping. Scroll to zoom, drag the background to pan.
+- **Learn** — guided demos of all 21 concepts from the networking chain (Ethernet → MAC → Switch →
+  IP → DHCP → Subnet → Router → Gateway → Routes → OSPF → BGP → ICMP → TCP → UDP → Ports →
+  Firewall → TLS → VPN → DNS → HTTP → Load balancer). Each demo plays a scripted topology with
+  narration and ends with a "Try it yourself" hands-on task. Deep-linkable: `?c=ospf`.
+
 ## Run it
 
 ```sh
@@ -12,6 +22,12 @@ npm run dev
 ```
 
 Open http://localhost:5173
+
+## Deploy
+
+```sh
+npm run deploy   # builds + pushes dist/ to Azure Static Web Apps (needs az login)
+```
 
 ## What it teaches (CompTIA Network+ Domain 1.0)
 
@@ -28,7 +44,7 @@ Open http://localhost:5173
 React 19 + TypeScript + Vite, hand-rolled SVG (no diagram library). No backend, no state outside
 the browser tab.
 
-## Roadmap
+## Credit
 
-- Phase 2: concept sidebar (click a Net+ concept → guided diagram), per the vault plan
-- Phase 3: deploy to Azure Static Web Apps + portfolio card
+Visual style inspired by [Every Networking Concept Explained](https://youtu.be/bdeV_TjNfFA)
+by [Tech With Diego](https://www.youtube.com/@diegoarias-tech) — go watch the original.
