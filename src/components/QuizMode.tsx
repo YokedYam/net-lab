@@ -90,8 +90,8 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
         <div className="study-intro">
           <h1>Practice Quiz</h1>
           <p className="study-lead">
-            Exam-style multiple choice. Miss one and the lab points you to the demo that explains it —
-            keep quizzing or go watch it. The pool reshuffles forever, so drill as long as you like.
+            Exam-style multiple choice. Miss one and the lab points you to the demo that explains it.
+            Keep quizzing or go watch it. The pool reshuffles forever, so drill as long as you like.
           </p>
           <div className="study-filter">
             <span className="study-filter-label">Pick a focus</span>

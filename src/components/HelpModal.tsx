@@ -15,23 +15,23 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         </p>
         <p>
           <b>Two modes:</b> the <b>Build</b> tab is the free sandbox below. The <b>Learn</b> tab
-          plays guided demos of all 21 concepts from the networking chain — Ethernet to load
-          balancer — each ending with a “Try it yourself” hands-on task.
+          plays guided demos of all 21 concepts from the networking chain. Ethernet to load
+          balancer: each ending with a “Try it yourself” hands-on task.
         </p>
         <ol>
           <li>
-            <b>Place</b> — pick a device in the left bar, click the canvas to drop it.
+            <b>Place</b>: pick a device in the left bar, click the canvas to drop it.
           </li>
           <li>
-            <b>Cable</b> — click two devices to connect them. Hosts have one NIC; use a switch to
+            <b>Cable</b>: click two devices to connect them. Hosts have one NIC; use a switch to
             fan out.
           </li>
           <li>
-            <b>Inspect</b> — Select tool, click a device: MAC, IP, subnet, gateway. IPs are
+            <b>Inspect</b>: Select tool, click a device: MAC, IP, subnet, gateway. IPs are
             auto-assigned per LAN (pretend DHCP). Glowing bubbles show each subnet.
           </li>
           <li>
-            <b>Ping</b> — click source, then destination. Same subnet goes straight through the
+            <b>Ping</b>: click source, then destination. Same subnet goes straight through the
             switch; different subnets must use the default gateway (a router).
           </li>
         </ol>
@@ -42,7 +42,7 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
             decision, router hop, firewall inspection.
           </li>
           <li>
-            <b>Break it:</b> select Firewall-1, check “Block ICMP”, ping again — watch the packet die
+            <b>Break it:</b> select Firewall-1, check “Block ICMP”, ping again: watch the packet die
             at the wall.
           </li>
           <li>
@@ -53,22 +53,22 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         <h3>Cheat sheet</h3>
         <ul className="gloss">
           <li>
-            <b>MAC address</b> — burned-in hardware ID; only used inside the local network.
+            <b>MAC address</b>: burned-in hardware ID; only used inside the local network.
           </li>
           <li>
-            <b>IP address</b> — logical address that can cross networks.
+            <b>IP address</b>: logical address that can cross networks.
           </li>
           <li>
-            <b>Switch (L2)</b> — forwards frames by MAC within one LAN; has no IP.
+            <b>Switch (L2)</b>: forwards frames by MAC within one LAN; has no IP.
           </li>
           <li>
-            <b>Router (L3)</b> — joins networks and forwards packets by IP.
+            <b>Router (L3)</b>: joins networks and forwards packets by IP.
           </li>
           <li>
-            <b>Default gateway</b> — the router IP your device uses when the target is off-subnet.
+            <b>Default gateway</b>: the router IP your device uses when the target is off-subnet.
           </li>
           <li>
-            <b>Firewall</b> — allows or blocks traffic by rule (here: an ICMP toggle).
+            <b>Firewall</b>: allows or blocks traffic by rule (here: an ICMP toggle).
           </li>
         </ul>
         <p className="muted">Esc returns to the Select tool at any time.</p>

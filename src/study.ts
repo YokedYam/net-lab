@@ -78,8 +78,8 @@ export function subnetFacts(ip: string, cidr: number): SubnetFacts {
     mask: intToIp(maskInt),
     network: intToIp(network),
     broadcast: intToIp(broadcast),
-    firstHost: usable > 0 ? intToIp((network + 1) >>> 0) : '—',
-    lastHost: usable > 0 ? intToIp((broadcast - 1) >>> 0) : '—',
+    firstHost: usable > 0 ? intToIp((network + 1) >>> 0) : 'n/a',
+    lastHost: usable > 0 ? intToIp((broadcast - 1) >>> 0) : 'n/a',
     hostCount: usable,
   };
 }

@@ -83,7 +83,7 @@ export function Flashcards({ onResource }: { onResource: (conceptId: string) => 
         <div className="study-intro">
           <h1>Flashcards</h1>
           <p className="study-lead">
-            The facts that show up most — ports, OSI layers, subnetting, and the pairs people always
+            The facts that show up most: ports, OSI layers, subnetting, and the pairs people always
             mix up (TCP vs UDP, switch vs router, TLS vs SSL). Flip, rate yourself, repeat.
           </p>
           <div className="study-filter">

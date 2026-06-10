@@ -79,7 +79,7 @@ export function Toolbar({
         <>
           <div className="tb-section">The concept chain</div>
           <p className="tb-blurb">
-            21 concepts, in order — each one solves the problem the last one created. Click to watch
+            21 concepts, in order: each one solves the problem the last one created. Click to watch
             the demo.
           </p>
           {CONCEPTS.map((c, i) => (

@@ -24,7 +24,7 @@ import {
   uid,
 } from './model';
 import { conceptById } from './concepts';
-import type { Concept } from './concepts';
+import type { Concept, DemoNote } from './concepts';
 import { DeviceGlyph } from './icons';
 import { Toolbar } from './components/Toolbar';
 import type { SidebarTab } from './components/Toolbar';
@@ -33,6 +33,7 @@ import { EventLog } from './components/EventLog';
 import { HelpModal } from './components/HelpModal';
 import { PacketFlight } from './components/PacketFlight';
 import { DemoFlight } from './components/DemoFlight';
+import { DemoAnnotations } from './components/DemoAnnotations';
 import { QuizMode } from './components/QuizMode';
 import { Flashcards } from './components/Flashcards';
 import { PbqMode } from './components/PbqMode';
@@ -108,7 +109,7 @@ function demoState(): { devices: Device[]; links: Link[] } {
 }
 
 const WELCOME: LogEntry[] = [
-  { id: uid(), kind: 'system', text: 'Welcome to Net+ Visual Lab — a tiny Packet Tracer.' },
+  { id: uid(), kind: 'system', text: 'Welcome to Net+ Visual Lab (a tiny Packet Tracer).' },
   {
     id: uid(),
     kind: 'info',
@@ -250,6 +251,7 @@ export default function App() {
   const [caption, setCaption] = useState<string | null>(null);
   const [demoFlights, setDemoFlights] = useState<ActiveDemoFlight[] | null>(null);
   const [demoHighlight, setDemoHighlight] = useState<Set<string> | null>(null);
+  const [demoNotes, setDemoNotes] = useState<DemoNote[] | null>(null);
   const [section, setSection] = useState<Section>('lab');
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -331,11 +333,11 @@ export default function App() {
       if (degree(id) >= NIC_LIMIT[d.type]) {
         if (isHost(d.type)) {
           pushLog(
-            `${d.name} already has a cable — hosts have a single NIC. Add a Switch to connect more devices.`,
+            `${d.name} already has a cable. Hosts have a single NIC. Add a Switch to connect more devices.`,
             'warn'
           );
         } else if (d.type === 'firewall') {
-          pushLog(`${d.name} is an inline firewall — it only has 2 ports (in and out).`, 'warn');
+          pushLog(`${d.name} is an inline firewall. It only has 2 ports (in and out).`, 'warn');
         } else {
           pushLog(`${d.name} is out of ports.`, 'warn');
         }
@@ -378,7 +380,7 @@ export default function App() {
     setDevices((ds) => ds.map((d) => (d.id === id ? { ...d, blockIcmp: blocked } : d)));
     const d = byId.get(id);
     pushLog(
-      `${d?.name} now ${blocked ? 'BLOCKS ICMP — pings through it will be dropped' : 'allows ICMP — pings can pass'}.`,
+      `${d?.name} now ${blocked ? 'BLOCKS ICMP. Pings through it will be dropped' : 'allows ICMP. Pings can pass'}.`,
       blocked ? 'warn' : 'system'
     );
   };
@@ -390,6 +392,7 @@ export default function App() {
     setCaption(null);
     setDemoFlights(null);
     setDemoHighlight(null);
+    setDemoNotes(null);
     history.replaceState(null, '', location.pathname);
   };
 
@@ -408,9 +411,10 @@ export default function App() {
     setTab('learn');
     setDemoFlights(null);
     setDemoHighlight(null);
+    setDemoNotes(null);
     setCam({ x: 0, y: 0, k: 1 });
     setDemo({ conceptId, step: 0, playing: true, runId: Date.now() });
-    pushLog(`▶ Demo — ${c.title}: ${c.problem}`, 'system');
+    pushLog(`▶ Demo · ${c.title}: ${c.problem}`, 'system');
     history.replaceState(null, '', `?c=${conceptId}`);
   };
 
@@ -443,14 +447,14 @@ export default function App() {
     setTab('build');
     setTool('ping');
     setTask(c.tryIt);
-    pushLog(`🧪 Hands-on — ${c.title}. Your turn: ${c.tryIt}`, 'system');
+    pushLog(`🧪 Hands-on · ${c.title}. Your turn: ${c.tryIt}`, 'system');
   };
 
   const advance = useCallback(() => {
     setDemo((d) => (d ? { ...d, step: d.step + 1 } : d));
   }, []);
 
-  // Demo step executor — runs the current step, auto-advancing while playing.
+  // Demo step executor: runs the current step, auto-advancing while playing.
   useEffect(() => {
     if (!demo) return;
     const c = conceptById(demo.conceptId);
@@ -468,6 +472,7 @@ export default function App() {
       }, Math.max(2800, 55 * text.length));
     };
     setDemoHighlight(null);
+    setDemoNotes(('notes' in step && step.notes ? step.notes : null) as DemoNote[] | null);
 
     if (step.kind === 'say') {
       setCaption(step.text);
@@ -478,6 +483,11 @@ export default function App() {
       setCaption(step.say);
       pushLog(step.say, 'info');
       auto(step.say);
+    } else if (step.kind === 'note') {
+      const say = step.say ?? step.notes.map((n) => n.text).join(' ');
+      setCaption(say);
+      pushLog(say, 'info');
+      auto(say);
     } else if (step.kind === 'set') {
       setDevices((ds) => ds.map((d) => (d.id === step.id ? { ...d, blockIcmp: step.blockIcmp } : d)));
       setCaption(step.say);
@@ -668,7 +678,7 @@ export default function App() {
     setFlight(null);
     setTask(null);
     setTab('build');
-    pushLog('Canvas cleared — build your own network. Start with two laptops and a switch.', 'system');
+    pushLog('Canvas cleared. Build your own network. Start with two laptops and a switch.', 'system');
   };
 
   const onTab = (t: SidebarTab) => {
@@ -677,13 +687,13 @@ export default function App() {
   };
 
   const hint = useMemo(() => {
-    if (tool === 'select') return 'Select — click to inspect · drag devices · drag background to pan · scroll to zoom';
+    if (tool === 'select') return 'Select: click to inspect · drag devices · drag background to pan · scroll to zoom';
     if (tool === 'cable')
-      return pendingId ? 'Cable — now click the second device' : 'Cable — click the first device to connect';
+      return pendingId ? 'Cable: now click the second device' : 'Cable: click the first device to connect';
     if (tool === 'ping')
-      return pendingId ? 'Ping — now click the destination' : 'Ping — click the source device';
-    if (tool === 'delete') return 'Delete — click a device or a cable';
-    return `Place — click anywhere on the canvas to drop a ${DEVICE_LABEL[tool as DeviceType]} (Esc when done)`;
+      return pendingId ? 'Ping: now click the destination' : 'Ping: click the source device';
+    if (tool === 'delete') return 'Delete: click a device or a cable';
+    return `Place: click anywhere on the canvas to drop a ${DEVICE_LABEL[tool as DeviceType]} (Esc when done)`;
   }, [tool, pendingId]);
 
   const deviceCursor =
@@ -836,6 +846,12 @@ export default function App() {
                   onDone={onDemoFlightDone}
                 />
               ))}
+              {demoNotes && (
+                <DemoAnnotations
+                  notes={demoNotes}
+                  pos={new Map(devices.map((d) => [d.id, { x: d.x, y: d.y }]))}
+                />
+              )}
             </g>
           </svg>
 

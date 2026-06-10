@@ -55,7 +55,7 @@ export function PbqMode({ onResource }: { onResource: (conceptId: string) => voi
           <h1>Performance-Based Questions</h1>
           <p className="study-lead">
             The hands-on part of the exam. Match ports, sort devices by layer, subnet a network, or
-            order the troubleshooting steps — then get graded with a breakdown of exactly what to
+            order the troubleshooting steps, then get graded with a breakdown of exactly what to
             review.
           </p>
           <div className="pbq-grid">
@@ -123,7 +123,7 @@ function MatchBody({ pbq, grade, setGrade }: { pbq: MatchPbq; grade: Grade | nul
   const submit = () => {
     const parts: Part[] = pbq.prompts.map((p) => {
       const your = ans[p.id] ?? '';
-      return { label: p.text, your: your || '—', correct: p.correct, ok: your === p.correct, why: p.why };
+      return { label: p.text, your: your || '(blank)', correct: p.correct, ok: your === p.correct, why: p.why };
     });
     const correct = parts.filter((p) => p.ok).length;
     setGrade({ total: parts.length, correct, parts, insight: matchInsight(pbq, parts) });
@@ -144,7 +144,7 @@ function MatchBody({ pbq, grade, setGrade }: { pbq: MatchPbq; grade: Grade | nul
                 disabled={locked}
                 onChange={(e) => setAns((a) => ({ ...a, [p.id]: e.target.value }))}
               >
-                <option value="">— choose —</option>
+                <option value="">Choose…</option>
                 {pbq.options.map((o) => (
                   <option key={o} value={o}>
                     {o}
@@ -168,7 +168,7 @@ function CategorizeBody({ pbq, grade, setGrade }: { pbq: CategorizePbq; grade: G
   const submit = () => {
     const parts: Part[] = pbq.items.map((it) => {
       const your = ans[it.id] ?? '';
-      return { label: it.text, your: your || '—', correct: it.bucket, ok: your === it.bucket, why: it.why };
+      return { label: it.text, your: your || '(blank)', correct: it.bucket, ok: your === it.bucket, why: it.why };
     });
     const correct = parts.filter((p) => p.ok).length;
     setGrade({ total: parts.length, correct, parts, insight: categorizeInsight(pbq, parts) });
@@ -219,7 +219,7 @@ function SubnetBody({ pbq, grade, setGrade }: { pbq: SubnetPbq; grade: Grade | n
   const submit = () => {
     const parts: Part[] = pbq.fields.map((f) => {
       const your = ans[f] ?? '';
-      return { label: SUBNET_LABEL[f], your: your || '—', correct: correctFor(f), ok: isOk(f, your) };
+      return { label: SUBNET_LABEL[f], your: your || '(blank)', correct: correctFor(f), ok: isOk(f, your) };
     });
     const correct = parts.filter((p) => p.ok).length;
     setGrade({ total: parts.length, correct, parts, insight: subnetInsight(pbq, parts) });
@@ -344,7 +344,7 @@ function Results({ grade, pbq, onResource, onRetry }: { grade: Grade; pbq: Pbq; 
           {grade.correct}/{grade.total}
         </span>
         <span className="pbq-score-pct">{pct}%</span>
-        <span className="pbq-score-tag">{perfect ? 'Perfect — exam-ready on this one' : 'Graded'}</span>
+        <span className="pbq-score-tag">{perfect ? 'Perfect, exam-ready on this one' : 'Graded'}</span>
       </div>
 
       <div className="pbq-insight">
@@ -403,21 +403,21 @@ function matchInsight(pbq: MatchPbq, parts: Part[]): string {
   const miss = missedLabels(parts);
   if (miss.length === 0)
     return pbq.id === 'pbq-ports'
-      ? 'Clean sweep on the port numbers — that memorization pays off all over the exam.'
+      ? 'Clean sweep on the port numbers. That memorization pays off all over the exam.'
       : 'Every item mapped to the right layer. You clearly know which gear lives where.';
   const head = `You matched ${parts.length - miss.length} of ${parts.length}. Misses: ${miss.join(', ')}.`;
   if (pbq.id === 'pbq-ports')
-    return `${head} Port numbers are pure recall — hammer the Flashcards "Ports" set until they're automatic.`;
+    return `${head} Port numbers are pure recall. Hammer the Flashcards "Ports" set until they're automatic.`;
   return `${head} Anchor each item to its layer: switch + MAC = Layer 2, router + IP = Layer 3, ports = Layer 4.`;
 }
 
 function categorizeInsight(pbq: CategorizePbq, parts: Part[]): string {
   const miss = missedLabels(parts);
-  if (miss.length === 0) return 'Sorted every item correctly — nice. You can tell these apart under pressure.';
+  if (miss.length === 0) return 'Sorted every item correctly. Nice work. You can tell these apart under pressure.';
   const head = `You placed ${parts.length - miss.length} of ${parts.length} correctly. Re-check: ${miss.join(', ')}.`;
   if (pbq.id === 'pbq-tcpudp') return `${head} The test: "is a late packet useless?" If yes → UDP (voice, video, DNS, DHCP); if every byte matters → TCP.`;
   if (pbq.id === 'pbq-devlayer') return `${head} Hubs/repeaters move bits (L1), switches/bridges move frames by MAC (L2), routers move packets by IP (L3).`;
-  if (pbq.id === 'pbq-pubpriv') return `${head} Private blocks are 10/8, 172.16–172.31, and 192.168/16 — watch the 172 trap: it ends at 172.31.`;
+  if (pbq.id === 'pbq-pubpriv') return `${head} Private blocks are 10/8, 172.16–172.31, and 192.168/16. Watch the 172 trap: it ends at 172.31.`;
   return head;
 }
 
@@ -438,8 +438,8 @@ function orderInsight(pbq: OrderPbq, correct: number): string {
   const total = pbq.items.length;
   if (correct === total)
     return pbq.id === 'pbq-troubleshoot'
-      ? 'Perfect order. It always starts with Identify the problem and ends with Document — verify functionality before you document.'
-      : 'Perfect — DORA: Discover, Offer, Request, Acknowledge.';
+      ? 'Perfect order. It always starts with Identify the problem and ends with Document. Verify functionality before you document.'
+      : 'Perfect. DORA: Discover, Offer, Request, Acknowledge.';
   if (pbq.id === 'pbq-troubleshoot')
     return `${correct} of ${total} in place. Lock in the bookends: step 1 is always Identify the problem, step 7 is always Document. Test your theory before you act, and verify before you close.`;
   return `${correct} of ${total} in place. Remember DORA: Discover → Offer → Request → Acknowledge.`;

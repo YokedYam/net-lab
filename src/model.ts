@@ -260,7 +260,7 @@ export function planPing(
   for (const d of [src, dst]) {
     if (d.type === 'switch' || d.type === 'firewall') {
       return fail(
-        `${d.name} is a Layer 2 device — it has no IP address to ping. Try a laptop, PC, server, or router.`
+        `${d.name} is a Layer 2 device. It has no IP address to ping. Try a laptop, PC, server, or router.`
       );
     }
   }
@@ -268,13 +268,13 @@ export function planPing(
   const srcAddrs = net.addrs.get(srcId) ?? [];
   const dstAddrs = net.addrs.get(dstId) ?? [];
   if (srcAddrs.length === 0)
-    return fail(`${src.name} has no IP — it isn't connected to any network yet. Cable it to a switch or router first.`);
+    return fail(`${src.name} has no IP: it isn't connected to any network yet. Cable it to a switch or router first.`);
   if (dstAddrs.length === 0)
-    return fail(`${dst.name} has no IP — it isn't connected to any network yet. Cable it to a switch or router first.`);
+    return fail(`${dst.name} has no IP: it isn't connected to any network yet. Cable it to a switch or router first.`);
 
   const path = findPath(srcId, dstId, links);
   if (!path)
-    return fail(`Destination unreachable — there is no path from ${src.name} to ${dst.name}. Are they cabled together (through a router)?`, 'error');
+    return fail(`Destination unreachable: there is no path from ${src.name} to ${dst.name}. Are they cabled together (through a router)?`, 'error');
 
   const srcSegs = net.segsOf.get(srcId) ?? new Set<string>();
   const dstSegs = net.segsOf.get(dstId) ?? new Set<string>();
@@ -293,11 +293,11 @@ export function planPing(
 
   put(0, `${src.name} → ping ${dstIp} (${dst.name})`, 'system');
   if (sameSubnet) {
-    put(0, `${src.name}: ${dst.name} is on my subnet (${srcSeg?.subnet}) — ARP for its MAC, then send the frame directly.`);
+    put(0, `${src.name}: ${dst.name} is on my subnet (${srcSeg?.subnet}). ARP for its MAC, then send the frame directly.`);
   } else if (src.type === 'router') {
-    put(0, `${src.name}: ${dstIp} isn't directly connected — consulting my routing table.`);
+    put(0, `${src.name}: ${dstIp} isn't directly connected. Consulting my routing table.`);
   } else {
-    put(0, `${src.name}: ${dstIp} is on a different subnet — sending the packet to my default gateway (${srcSeg?.gatewayIp}).`);
+    put(0, `${src.name}: ${dstIp} is on a different subnet. Sending the packet to my default gateway (${srcSeg?.gatewayIp}).`);
   }
 
   let stopIndex = path.length - 1;
@@ -307,15 +307,15 @@ export function planPing(
     const d = byId.get(path[i])!;
     const next = byId.get(path[i + 1])!;
     if (d.type === 'switch') {
-      put(i, `${d.name}: Layer 2 switch — MAC table lookup, forwarding the frame toward ${next.name}.`);
+      put(i, `${d.name}: Layer 2 switch, MAC table lookup, forwarding the frame toward ${next.name}.`);
     } else if (d.type === 'firewall') {
       if (d.blockIcmp) {
-        put(i, `${d.name}: inspecting packet… ICMP is BLOCKED by rule — packet dropped.`, 'error');
+        put(i, `${d.name}: inspecting packet… ICMP is BLOCKED by rule. Packet dropped.`, 'error');
         stopIndex = i;
         outcome = 'blocked';
         break;
       }
-      put(i, `${d.name}: inspecting packet… ICMP allowed — passing it through.`);
+      put(i, `${d.name}: inspecting packet… ICMP allowed. Passing it through.`);
     } else if (d.type === 'router') {
       const outSeg = segOfPair(d.id, next.id);
       put(i, `${d.name}: routing the packet onto ${outSeg?.subnet ?? 'the next network'} (TTL −1, new frame, same IP packet).`);
@@ -328,12 +328,12 @@ export function planPing(
   if (outcome === 'blocked') {
     const fw = byId.get(path[stopIndex])!;
     finale.push({
-      text: `Request timed out — ${fw.name} dropped your ping. (Select it and un-check "Block ICMP" to fix this.)`,
+      text: `Request timed out: ${fw.name} dropped your ping. (Select it and un-check "Block ICMP" to fix this.)`,
       kind: 'error',
     });
   } else {
-    put(path.length - 1, `${dst.name}: echo request received — sending an echo reply back.`, 'success');
-    finale.push({ text: `${src.name}: reply from ${dstIp} — ping successful ✓`, kind: 'success' });
+    put(path.length - 1, `${dst.name}: echo request received. Sending an echo reply back.`, 'success');
+    finale.push({ text: `${src.name}: reply from ${dstIp}, ping successful ✓`, kind: 'success' });
   }
 
   return { ok: true, plan: { path, stopIndex, outcome, eventsAt, finale } };

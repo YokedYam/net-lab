@@ -15,17 +15,17 @@ export interface QuizQuestion {
 // A practice pool written in the scenario / "BEST answer" style the real
 // Network+ (N10-009) uses. Plain-English explanations, analogies for beginners.
 export const QUIZ: QuizQuestion[] = [
-  // ---------------- Domain 1.0 — Networking Concepts ----------------
+  // ---------------- Domain 1.0: Networking Concepts ----------------
   {
     id: 'q-osi-1',
     domain: '1.0',
     topic: 'OSI model',
     question:
       'A developer says their app works on the same LAN but fails across the internet. You suspect an IP routing problem. Which OSI layer handles logical addressing and routing between networks?',
-    choices: ['Layer 2 — Data Link', 'Layer 3 — Network', 'Layer 4 — Transport', 'Layer 7 — Application'],
+    choices: ['Layer 2: Data Link', 'Layer 3: Network', 'Layer 4: Transport', 'Layer 7: Application'],
     answer: 1,
     explanation:
-      'Layer 3 (Network) is where IP addresses and routing live — it gets a packet from one network to another. Think of Layer 2 as the street address on one block (MAC), and Layer 3 as the city + ZIP that gets mail across the country (IP).',
+      'Layer 3 (Network) is where IP addresses and routing live. It gets a packet from one network to another. Think of Layer 2 as the street address on one block (MAC), and Layer 3 as the city + ZIP that gets mail across the country (IP).',
     conceptId: 'ip',
   },
   {
@@ -38,7 +38,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['TCP, because it guarantees delivery', 'UDP, because it is fast and connectionless', 'ICMP, because it tests reachability', 'ARP, because it resolves addresses'],
     answer: 1,
     explanation:
-      'UDP is "fire and forget" — no handshake, no retransmits, low delay. That is exactly what real-time voice/video want: a late packet is useless, so dropping it beats waiting. TCP would pause to resend and make the call lag. Analogy: UDP is shouting across a room; TCP is a phone call where you confirm "you still there?"',
+      'UDP is "fire and forget": no handshake, no retransmits, low delay. That is exactly what real-time voice/video want: a late packet is useless, so dropping it beats waiting. TCP would pause to resend and make the call lag. Analogy: UDP is shouting across a room; TCP is a phone call where you confirm "you still there?"',
   },
   {
     id: 'q-ports-1',
@@ -49,7 +49,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['TCP 80', 'UDP 53', 'TCP 443', 'TCP 22'],
     answer: 1,
     explanation:
-      'Name-to-IP resolution is DNS, which uses port 53 (mostly UDP). If the IP works but the name does not, DNS is the prime suspect. Port 80/443 are the web itself; 22 is SSH. Analogy: DNS is the phone book — the phone still works, you just cannot look up the number.',
+      'Name-to-IP resolution is DNS, which uses port 53 (mostly UDP). If the IP works but the name does not, DNS is the prime suspect. Port 80/443 are the web itself; 22 is SSH. Analogy: DNS is the phone book. The phone still works, you just cannot look up the number.',
   },
   {
     id: 'q-dhcp-1',
@@ -104,7 +104,7 @@ export const QUIZ: QuizQuestion[] = [
     ],
     answer: 1,
     explanation:
-      'The IP addresses (source and destination) stay the same end to end — that is the whole point of Layer 3. The MAC addresses are rewritten at every hop because MAC only has meaning on the local link. Analogy: the final mailing address (IP) never changes, but each mail truck (MAC) hands off to the next.',
+      'The IP addresses (source and destination) stay the same end to end. That is the whole point of Layer 3. The MAC addresses are rewritten at every hop because MAC only has meaning on the local link. Analogy: the final mailing address (IP) never changes, but each mail truck (MAC) hands off to the next.',
   },
   {
     id: 'q-subnet-1',
@@ -150,7 +150,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['192.168.1.1', '2001:0db8::1', '2001:db8:::1', 'FE80:1:2:3:4:5:6:7:8'],
     answer: 1,
     explanation:
-      'IPv6 is eight groups of hex. The :: shorthand replaces one run of all-zero groups — and you may use it only once. 2001:0db8::1 is valid. ":::" (triple colon) is illegal, and the last option has nine groups.',
+      'IPv6 is eight groups of hex. The :: shorthand replaces one run of all-zero groups. And you may use it only once. 2001:0db8::1 is valid. ":::" (triple colon) is illegal, and the last option has nine groups.',
   },
   {
     id: 'q-loadbalancer-1',
@@ -165,7 +165,7 @@ export const QUIZ: QuizQuestion[] = [
       'A load balancer sits in front of a pool of servers and distributes incoming requests, so no single box gets overwhelmed and a dead server can be skipped. Think of a host at a restaurant seating guests evenly across sections.',
   },
 
-  // ---------------- Domain 2.0 — Network Implementation ----------------
+  // ---------------- Domain 2.0: Network Implementation ----------------
   {
     id: 'q-ospf-1',
     domain: '2.0',
@@ -186,7 +186,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['OSPF', 'EIGRP', 'BGP', 'STP'],
     answer: 2,
     explanation:
-      'BGP is the routing protocol of the internet — it exchanges routes between autonomous systems (separate organizations). OSPF and EIGRP are interior protocols used inside one organization. Analogy: OSPF is navigating one city; BGP is the highway system connecting cities.',
+      'BGP is the routing protocol of the internet. It exchanges routes between autonomous systems (separate organizations). OSPF and EIGRP are interior protocols used inside one organization. Analogy: OSPF is navigating one city; BGP is the highway system connecting cities.',
   },
   {
     id: 'q-vlan-1',
@@ -255,7 +255,7 @@ export const QUIZ: QuizQuestion[] = [
       'Power over Ethernet sends both data and power over one Ethernet cable, so APs, IP cameras, and phones work without a nearby outlet. One cable does two jobs.',
   },
 
-  // ---------------- Domain 3.0 — Network Operations ----------------
+  // ---------------- Domain 3.0: Network Operations ----------------
   {
     id: 'q-snmp-1',
     domain: '3.0',
@@ -264,14 +264,14 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['SNMP', 'SMTP', 'NTP', 'TFTP'],
     answer: 0,
     explanation:
-      'SNMP (Simple Network Management Protocol) monitors and manages devices — polling for stats and receiving traps when something goes wrong. Do not confuse it with SMTP (email) or NTP (time). Use SNMPv3 because it adds encryption.',
+      'SNMP (Simple Network Management Protocol) monitors and manages devices. Polling for stats and receiving traps when something goes wrong. Do not confuse it with SMTP (email) or NTP (time). Use SNMPv3 because it adds encryption.',
   },
   {
     id: 'q-syslog-1',
     domain: '3.0',
     topic: 'Logging',
     question: 'On the syslog severity scale, which level is the MOST severe?',
-    choices: ['0 — Emergency', '3 — Error', '5 — Notice', '7 — Debug'],
+    choices: ['0: Emergency', '3: Error', '5: Notice', '7: Debug'],
     answer: 0,
     explanation:
       'Syslog severity runs 0 (Emergency, system unusable) to 7 (Debug, most verbose). Lower number = more severe. A handy mnemonic: "Every Awesome Cisco Engineer Will Need Ice cream Daily" for Emergency, Alert, Critical, Error, Warning, Notice, Informational, Debug.',
@@ -323,7 +323,7 @@ export const QUIZ: QuizQuestion[] = [
       'NTP (Network Time Protocol, UDP 123) keeps device clocks synchronized. Consistent time is critical for correlating logs during troubleshooting and security investigations.',
   },
 
-  // ---------------- Domain 4.0 — Network Security ----------------
+  // ---------------- Domain 4.0: Network Security ----------------
   {
     id: 'q-onpath-1',
     domain: '4.0',
@@ -335,7 +335,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['On-path (man-in-the-middle) via ARP poisoning', 'SYN flood', 'DNS amplification', 'Evil twin'],
     answer: 0,
     explanation:
-      'ARP poisoning lets an attacker insert themselves between you and the gateway — an on-path (man-in-the-middle) attack. Encryption like TLS protects the data even if they intercept it. Dynamic ARP Inspection on switches helps stop the poisoning.',
+      'ARP poisoning lets an attacker insert themselves between you and the gateway. An on-path (man-in-the-middle) attack. Encryption like TLS protects the data even if they intercept it. Dynamic ARP Inspection on switches helps stop the poisoning.',
   },
   {
     id: 'q-vpn-1',
@@ -358,7 +358,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['Next-generation firewall (NGFW)', 'Layer 2 switch', 'Hub', 'Basic ACL on a router'],
     answer: 0,
     explanation:
-      'A next-generation firewall inspects deeper — application awareness, user identity, and intrusion prevention — beyond the simple IP/port rules of a traditional firewall. More context = smarter blocking.',
+      'A next-generation firewall inspects deeper. Application awareness, user identity, and intrusion prevention: beyond the simple IP/port rules of a traditional firewall. More context = smarter blocking.',
   },
   {
     id: 'q-8021x-1',
@@ -398,13 +398,13 @@ export const QUIZ: QuizQuestion[] = [
     topic: 'Attacks',
     question:
       'A web server becomes unreachable because thousands of compromised devices flood it with traffic at once. Which attack is this, and which CIA principle does it target?',
-    choices: ['DDoS — Availability', 'Phishing — Confidentiality', 'On-path — Integrity', 'SQL injection — Availability'],
+    choices: ['DDoS: Availability', 'Phishing: Confidentiality', 'On-path: Integrity', 'SQL injection: Availability'],
     answer: 0,
     explanation:
-      'A Distributed Denial of Service uses a botnet (many devices) to overwhelm a target, knocking it offline — that attacks Availability. It is a crowd jamming a doorway so real customers cannot get in.',
+      'A Distributed Denial of Service uses a botnet (many devices) to overwhelm a target, knocking it offline: that attacks Availability. It is a crowd jamming a doorway so real customers cannot get in.',
   },
 
-  // ---------------- Domain 5.0 — Network Troubleshooting ----------------
+  // ---------------- Domain 5.0: Network Troubleshooting ----------------
   {
     id: 'q-method-1',
     domain: '5.0',
@@ -452,7 +452,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['Duplex mismatch', 'Wrong DNS server', 'Exhausted DHCP scope', 'Blocked port 443'],
     answer: 0,
     explanation:
-      'Late collisions plus CRC errors on a working-but-slow link scream duplex mismatch (one side full-duplex, the other half). Fix by setting both ends the same — ideally auto-negotiate on both.',
+      'Late collisions plus CRC errors on a working-but-slow link scream duplex mismatch (one side full-duplex, the other half). Fix by setting both ends the same. Ideally auto-negotiate on both.',
   },
   {
     id: 'q-ipconflict-1',
@@ -464,7 +464,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['Intermittent connectivity / IP conflict', 'Faster speeds', 'Better DNS resolution', 'Automatic VLAN assignment'],
     answer: 0,
     explanation:
-      'Two hosts with the same IP cause an address conflict — connectivity drops in and out as the network confuses the two. This is why DHCP (which tracks leases) usually beats hand-typed static IPs.',
+      'Two hosts with the same IP cause an address conflict. Connectivity drops in and out as the network confuses the two. This is why DHCP (which tracks leases) usually beats hand-typed static IPs.',
   },
   {
     id: 'q-apipa-1',
@@ -481,7 +481,7 @@ export const QUIZ: QuizQuestion[] = [
     ],
     answer: 1,
     explanation:
-      'A 169.254.x.x address is APIPA — the PC self-assigned because no DHCP server answered. The real problem is DHCP reachability (server down, cable unplugged, VLAN issue). APIPA is the "I gave up waiting" address.',
+      'A 169.254.x.x address is APIPA: the PC self-assigned because no DHCP server answered. The real problem is DHCP reachability (server down, cable unplugged, VLAN issue). APIPA is the "I gave up waiting" address.',
   },
   {
     id: 'q-loopback-1',
@@ -492,7 +492,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['The loopback address', 'The default gateway', 'A broadcast address', 'A public DNS server'],
     answer: 0,
     explanation:
-      '127.0.0.1 is the loopback — it tests your own machine’s TCP/IP stack without touching the network. If loopback fails, the problem is local (the stack itself), not the cable or switch.',
+      '127.0.0.1 is the loopback: it tests your own machine’s TCP/IP stack without touching the network. If loopback fails, the problem is local (the stack itself), not the cable or switch.',
   },
 
   // ---- extra high-yield items (added from N10-009 exam research) ----
@@ -510,7 +510,7 @@ export const QUIZ: QuizQuestion[] = [
     ],
     answer: 3,
     explanation:
-      'Wi-Fi 6 (802.11ax) adds OFDMA, which lets one access point serve many clients at once instead of one at a time — exactly what a dense crowd needs. Older standards choke when hundreds of devices share the air. Newer Wi-Fi number = better in a crowd.',
+      'Wi-Fi 6 (802.11ax) adds OFDMA, which lets one access point serve many clients at once instead of one at a time. Exactly what a dense crowd needs. Older standards choke when hundreds of devices share the air. Newer Wi-Fi number = better in a crowd.',
   },
   {
     id: 'q-wpa3-1',
@@ -526,18 +526,18 @@ export const QUIZ: QuizQuestion[] = [
     ],
     answer: 1,
     explanation:
-      'Enterprise mode uses 802.1X with a RADIUS server so every user has individual credentials — easy to revoke one person without changing everyone’s key. Personal mode uses one shared pre-shared key (PSK), fine for home but not per-user. WEP is broken; never use it.',
+      'Enterprise mode uses 802.1X with a RADIUS server so every user has individual credentials. Easy to revoke one person without changing everyone’s key. Personal mode uses one shared pre-shared key (PSK), fine for home but not per-user. WEP is broken; never use it.',
   },
   {
     id: 'q-ztna-1',
     domain: '1.0',
     topic: 'Modern network environments',
     question:
-      'A security model assumes no device or user is trusted by default — every request must be verified, even from inside the network. What is this approach called?',
+      'A security model assumes no device or user is trusted by default. Every request must be verified, even from inside the network. What is this approach called?',
     choices: ['Zero Trust', 'Flat network', 'Implicit allow', 'Perimeter-only security'],
     answer: 0,
     explanation:
-      'Zero Trust means "never trust, always verify" — being inside the network no longer earns automatic access. It is newer N10-009 material (alongside SDN, SD-WAN, SASE). Think of a building where every door needs a badge swipe, not just the front entrance.',
+      'Zero Trust means "never trust, always verify": being inside the network no longer earns automatic access. It is newer N10-009 material (alongside SDN, SD-WAN, SASE). Think of a building where every door needs a badge swipe, not just the front entrance.',
   },
   {
     id: 'q-ids-ips-1',
@@ -550,7 +550,7 @@ export const QUIZ: QuizQuestion[] = [
     choices: ['IDS (Intrusion Detection System)', 'IPS (Intrusion Prevention System)', 'A syslog server', 'A spanning-tree bridge'],
     answer: 1,
     explanation:
-      'An IPS sits inline and stops bad traffic in real time. An IDS only watches and alerts — it detects but does not block. Memory hook: Prevention = blocks, Detection = just tells you.',
+      'An IPS sits inline and stops bad traffic in real time. An IDS only watches and alerts. It detects but does not block. Memory hook: Prevention = blocks, Detection = just tells you.',
   },
   {
     id: 'q-cast-1',

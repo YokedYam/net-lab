@@ -1,7 +1,7 @@
 import type { DeviceType } from './model';
 
 // The 21-concept chain from Tech With Diego's "Every Networking Concept
-// Explained" — each concept exists because the previous one created a problem.
+// Explained": each concept exists because the previous one created a problem.
 // Demos are scripted step sequences played over a fixed topology; hands-on
 // loads the same topology into the sandbox with a task.
 
@@ -19,6 +19,15 @@ export interface ConceptTopology {
   links: [string, string][];
 }
 
+// An on-canvas callout that points at a device while a step plays, so the
+// explanation shows up on the diagram instead of only in the side text.
+export interface DemoNote {
+  at: string; // device id to anchor the callout to
+  text: string;
+  color?: string;
+  side?: 'top' | 'bottom' | 'left' | 'right';
+}
+
 export type DemoStep =
   | { kind: 'say'; text: string }
   | {
@@ -29,13 +38,16 @@ export type DemoStep =
       color?: string;
       say?: string;
       stopAt?: string;
+      notes?: DemoNote[];
     }
   | {
       kind: 'flights';
       flights: { from: string; to: string; label?: string; color?: string }[];
       say?: string;
+      notes?: DemoNote[];
     }
-  | { kind: 'highlight'; ids: string[]; say: string }
+  | { kind: 'highlight'; ids: string[]; say: string; notes?: DemoNote[] }
+  | { kind: 'note'; notes: DemoNote[]; say?: string }
   | { kind: 'set'; id: string; blockIcmp: boolean; say: string };
 
 export interface Concept {
@@ -71,28 +83,28 @@ export const CONCEPTS: Concept[] = [
       links: [['a', 'b']],
     },
     steps: [
-      { kind: 'say', text: 'Two computers. One cable. This is Ethernet — the physical layer of almost every wired network on Earth.' },
-      { kind: 'flight', from: 'a', to: 'b', label: 'frame', say: 'Data crosses the cable as electrical signals, grouped into chunks called frames.' },
+      { kind: 'say', text: 'Two computers. One cable. This is Ethernet: the physical layer of almost every wired network on Earth.' },
+      { kind: 'flight', from: 'a', to: 'b', label: 'frame', say: 'Data crosses the cable as electrical signals, grouped into chunks called frames.', notes: [{ at: 'a', text: 'Your NIC turns data into electrical signals', side: 'bottom' }, { at: 'b', text: 'Sent as chunks called frames', side: 'top' }] },
       { kind: 'say', text: 'Wi-Fi is the exact same idea with radio waves instead of copper. Same frames, no cable.' },
       { kind: 'highlight', ids: ['a', 'b'], say: 'Problem: the frame reached the wire… but who is it FOR? We need addressing. → MAC address' },
     ],
-    tryIt: 'Place two PCs, cable them together, and ping one from the other — the simplest network that can exist.',
+    tryIt: 'Place two PCs, cable them together, and ping one from the other. The simplest network that can exist.',
   },
   {
     id: 'mac',
     title: 'MAC address',
-    problem: "Two devices are connected — how do they know who's who?",
+    problem: "Two devices are connected. How do they know who's who?",
     topology: {
       devices: [D('a', 'pc', 'PC-1', 320, 320), D('b', 'pc', 'PC-2', 780, 320)],
       links: [['a', 'b']],
     },
     steps: [
-      { kind: 'highlight', ids: ['a'], say: 'Every network card is born with a unique hardware ID burned in at the factory: the MAC address. Something like A3:7F:0C:91:B4:E2.' },
-      { kind: 'flight', from: 'a', to: 'b', label: 'To: B4:…:E2', say: 'Every frame carries a destination MAC and a source MAC — like a sealed envelope with both addresses.' },
-      { kind: 'say', text: 'MAC addresses only work inside the local network. They never survive a hop through a router — remember that for later.' },
+      { kind: 'highlight', ids: ['a'], say: 'Every network card is born with a unique hardware ID burned in at the factory: the MAC address. Something like A3:7F:0C:91:B4:E2.', notes: [{ at: 'a', text: 'MAC A3:7F:0C:91:B4:E2, burned in at the factory', side: 'top' }] },
+      { kind: 'flight', from: 'a', to: 'b', label: 'To: B4:…:E2', say: 'Every frame carries a destination MAC and a source MAC. Like a sealed envelope with both addresses.', notes: [{ at: 'a', text: 'Source MAC (sender)', side: 'bottom' }, { at: 'b', text: 'Destination MAC (who it is for)', side: 'bottom' }] },
+      { kind: 'say', text: 'MAC addresses only work inside the local network. They never survive a hop through a router. Remember that for later.' },
       { kind: 'say', text: 'Problem: this works for 2 devices. What about 10? 100? You cannot cable everything to everything. → Switch' },
     ],
-    tryIt: 'Select any device and read its MAC address in the details panel — every device here gets a unique one.',
+    tryIt: 'Select any device and read its MAC address in the details panel. Every device here gets a unique one.',
   },
   {
     id: 'switch',
@@ -114,17 +126,17 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'highlight', ids: ['sw'], say: 'A switch is a box of network ports. Every device plugs into it, and the switch learns which MAC address lives on which port.' },
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'frame', say: 'Laptop-1 sends a frame for Server-1. The switch looks up the MAC table and forwards it out ONE port — only the right one.' },
+      { kind: 'highlight', ids: ['sw'], say: 'A switch is a box of network ports. Every device plugs into it, and the switch learns which MAC address lives on which port.', notes: [{ at: 'sw', text: 'Learns which MAC lives on which port', side: 'bottom' }] },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'frame', say: 'Laptop-1 sends a frame for Server-1. The switch looks up the MAC table and forwards it out ONE port. Only the right one.', notes: [{ at: 'sw', text: 'MAC table lookup, forwards out ONE port', side: 'bottom' }] },
       { kind: 'say', text: "That MAC-table lookup is what makes a switch smarter than an old hub, which blasted every frame to everyone." },
-      { kind: 'say', text: 'Problem: MAC addresses only work locally. How do you reach a device in ANOTHER network — across the internet? → IP address' },
+      { kind: 'say', text: 'Problem: MAC addresses only work locally. How do you reach a device in ANOTHER network. Across the internet? → IP address' },
     ],
-    tryIt: 'Add a fourth device, cable it to the switch, and ping it from Laptop-1 — watch the MAC-table narration in the log.',
+    tryIt: 'Add a fourth device, cable it to the switch, and ping it from Laptop-1. Watch the MAC-table narration in the log.',
   },
   {
     id: 'ip',
     title: 'IP address',
-    problem: 'MAC only works locally — how do you reach devices on other networks?',
+    problem: 'MAC only works locally: how do you reach devices on other networks?',
     topology: {
       devices: [
         D('l1', 'laptop', 'Laptop-1', 220, 240),
@@ -143,12 +155,12 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'say', text: 'An IP address is a LOGICAL address: 192.168.1.10. Unlike a MAC, it is not burned in — it depends on which network you join.' },
-      { kind: 'highlight', ids: ['l1', 'srv'], say: 'Look at the glowing bubbles: two different networks, two different address ranges. The first part of an IP identifies the network, the rest identifies the device.' },
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'IP packet', say: 'IP packets can cross network boundaries. The MAC envelope is replaced at every router hop, but the IP packet inside survives end to end.' },
+      { kind: 'say', text: 'An IP address is a LOGICAL address: 192.168.1.10. Unlike a MAC, it is not burned in. It depends on which network you join.' },
+      { kind: 'highlight', ids: ['l1', 'srv'], say: 'Look at the glowing bubbles: two different networks, two different address ranges. The first part of an IP identifies the network, the rest identifies the device.', notes: [{ at: 'l1', text: 'Network A: 192.168.1.x', side: 'top' }, { at: 'srv', text: 'Network B: 10.0.0.x', side: 'top' }] },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'IP packet', say: 'IP packets can cross network boundaries. The MAC envelope is replaced at every router hop, but the IP packet inside survives end to end.', notes: [{ at: 'r1', text: 'MAC envelope swapped each hop; IP stays the same', side: 'bottom' }] },
       { kind: 'say', text: 'Problem: who hands out these IP addresses? Nobody types them by hand on 500 laptops. → DHCP' },
     ],
-    tryIt: 'Click devices in the two different bubbles and compare their IPs — same idea, different network prefix.',
+    tryIt: 'Click devices in the two different bubbles and compare their IPs. Same idea, different network prefix.',
   },
   {
     id: 'dhcp',
@@ -166,12 +178,12 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'highlight', ids: ['l1'], say: 'A new device joins the network. It has a MAC address but NO IP yet. It cannot talk to anyone beyond the local wire.' },
-      { kind: 'flight', from: 'l1', to: 'r1', label: 'DHCP Discover', color: BLUE, say: 'So it shouts to everyone: "Can anybody give me an IP address?" — a DHCP Discover broadcast.' },
-      { kind: 'flight', from: 'r1', to: 'l1', label: 'Offer: .10', color: GREEN, say: 'The DHCP server (usually the router at home) answers with a lease: your IP, the subnet mask, the default gateway, and a DNS server. Four settings, zero typing.' },
-      { kind: 'say', text: 'In this lab, IPs appear automatically when you cable a device — pretend DHCP did it. Problem: what defines the SIZE of the local network DHCP hands addresses for? → Subnet' },
+      { kind: 'highlight', ids: ['l1'], say: 'A new device joins the network. It has a MAC address but NO IP yet. It cannot talk to anyone beyond the local wire.', notes: [{ at: 'l1', text: 'Has a MAC, but no IP yet', side: 'top' }] },
+      { kind: 'flight', from: 'l1', to: 'r1', label: 'DHCP Discover', color: BLUE, say: 'So it shouts to everyone: "Can anybody give me an IP address?" That is a DHCP Discover broadcast.', notes: [{ at: 'l1', text: '“Anyone got an IP for me?” broadcast', side: 'top' }] },
+      { kind: 'flight', from: 'r1', to: 'l1', label: 'Offer: .10', color: GREEN, say: 'The DHCP server (usually the router at home) answers with a lease: your IP, the subnet mask, the default gateway, and a DNS server. Four settings, zero typing.', notes: [{ at: 'r1', text: 'Leases IP + mask + gateway + DNS', side: 'top' }] },
+      { kind: 'say', text: 'In this lab, IPs appear automatically when you cable a device. Pretend DHCP did it. Problem: what defines the SIZE of the local network DHCP hands addresses for? → Subnet' },
     ],
-    tryIt: 'Drop a new laptop, cable it to the switch, and watch it get an IP instantly — that is the DHCP moment.',
+    tryIt: 'Drop a new laptop, cable it to the switch, and watch it get an IP instantly. That is the DHCP moment.',
   },
   {
     id: 'subnet',
@@ -191,12 +203,12 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'say', text: 'A subnet is the chunk of IP space that counts as "local". This bubble is 192.168.1.0/24 — every address starting 192.168.1 belongs to it.' },
+      { kind: 'say', text: 'A subnet is the chunk of IP space that counts as "local". This bubble is 192.168.1.0/24: every address starting 192.168.1 belongs to it.' },
       { kind: 'say', text: 'The /24 is CIDR notation: the first 24 bits are the network part, the last 8 are for hosts. That leaves 254 usable addresses.' },
-      { kind: 'highlight', ids: ['l1', 'l2'], say: 'Devices in the same subnet talk DIRECTLY — frame to MAC, through the switch, done. No router involved.' },
+      { kind: 'highlight', ids: ['l1', 'l2'], say: 'Devices in the same subnet talk DIRECTLY. Frame to MAC, through the switch, done. No router involved.', notes: [{ at: 'sw', text: 'Same subnet, talk directly through the switch, no router', side: 'bottom' }] },
       { kind: 'say', text: 'Problem: what happens when the destination is OUTSIDE your subnet? Someone has to carry traffic out. → Router' },
     ],
-    tryIt: 'Build two separate LANs (hosts + switch each) — each gets its own /24 bubble automatically.',
+    tryIt: 'Build two separate LANs (hosts + switch each): each gets its own /24 bubble automatically.',
   },
   {
     id: 'router',
@@ -220,8 +232,8 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'highlight', ids: ['r1'], say: 'The router stands with one foot in each network. See the overlapping bubbles? It owns an interface — and an IP — in both.' },
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'packet', say: 'A packet from the blue network to the purple one: the router strips the old frame, decrements TTL, wraps a new frame, and forwards. The IP packet inside never changes.' },
+      { kind: 'highlight', ids: ['r1'], say: 'The router stands with one foot in each network. See the overlapping bubbles? It owns an interface and an IP in both.', notes: [{ at: 'r1', text: 'One interface + IP in each network', side: 'top' }] },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'packet', say: 'A packet from the blue network to the purple one: the router strips the old frame, decrements TTL, wraps a new frame, and forwards. The IP packet inside never changes.', notes: [{ at: 'r1', text: 'Strips old frame, drops TTL, re-wraps, forwards', side: 'bottom' }] },
       { kind: 'say', text: 'Switches connect devices. Routers connect NETWORKS. That one sentence is half of Network+.' },
       { kind: 'say', text: 'Problem: your laptop might know several routers. Which one does it send to by default? → Default gateway' },
     ],
@@ -230,7 +242,7 @@ export const CONCEPTS: Concept[] = [
   {
     id: 'gateway',
     title: 'Default gateway',
-    problem: 'Your device has multiple ways out — which router does it use?',
+    problem: 'Your device has multiple ways out. Which router does it use?',
     topology: {
       devices: [
         D('l1', 'laptop', 'Laptop-1', 220, 240),
@@ -250,11 +262,11 @@ export const CONCEPTS: Concept[] = [
     },
     steps: [
       { kind: 'say', text: 'Every time your device sends a packet it asks ONE question: is the destination inside my subnet?' },
-      { kind: 'flight', from: 'l1', to: 'l2', label: 'local', color: GREEN, say: 'Inside the subnet → deliver directly. Frame to MAC, through the switch. The router never sees it.' },
-      { kind: 'flight', from: 'l1', to: 'r1', label: 'to gateway .1', say: 'Outside the subnet → hand it to the default gateway, the router IP your device was given by DHCP. Usually the .1 of your network.' },
+      { kind: 'flight', from: 'l1', to: 'l2', label: 'local', color: GREEN, say: 'Inside the subnet → deliver directly. Frame to MAC, through the switch. The router never sees it.', notes: [{ at: 'l1', text: 'Destination in my subnet, deliver directly', side: 'top' }] },
+      { kind: 'flight', from: 'l1', to: 'r1', label: 'to gateway .1', say: 'Outside the subnet → hand it to the default gateway, the router IP your device was given by DHCP. Usually the .1 of your network.', notes: [{ at: 'r1', text: 'Default gateway: the .1 router DHCP gave me', side: 'top' }] },
       { kind: 'flight', from: 'r1', to: 'srv', label: 'forwarded', say: 'From there it is the router\'s problem. "Not local? Send it to the gateway" is the entire algorithm your laptop knows.' },
     ],
-    tryIt: 'Select Laptop-1 and find its default gateway in the details panel — then ping Server-1 and watch the gateway decision in the log.',
+    tryIt: 'Select Laptop-1 and find its default gateway in the details panel. Then ping Server-1 and watch the gateway decision in the log.',
   },
   {
     id: 'routes',
@@ -277,16 +289,16 @@ export const CONCEPTS: Concept[] = [
     },
     steps: [
       { kind: 'say', text: 'A router holds a routing table: a list of "to reach network X, send to router Y". Every packet is matched against that list.' },
-      { kind: 'flight', from: 'h1', to: 'h2', label: 'hop by hop', say: 'Each router only knows the NEXT hop, not the whole journey — like passing a letter between post offices.' },
+      { kind: 'flight', from: 'h1', to: 'h2', label: 'hop by hop', say: 'Each router only knows the NEXT hop, not the whole journey: like passing a letter between post offices.' },
       { kind: 'say', text: 'Static routing means a human typed those table entries by hand. Fine for 3 routers. A nightmare for 300.' },
       { kind: 'say', text: 'Problem: networks change. Links die. Nobody can retype tables all day. Routers need to LEARN routes themselves. → OSPF' },
     ],
-    tryIt: 'Build a chain of two routers between two LANs and ping end to end — notice the 10.0.x.0/30 transit subnets between routers.',
+    tryIt: 'Build a chain of two routers between two LANs and ping end to end. Notice the 10.0.x.0/30 transit subnets between routers.',
   },
   {
     id: 'ospf',
     title: 'OSPF',
-    problem: "Static routing doesn't scale — how do routers auto-discover paths?",
+    problem: "Static routing doesn't scale: how do routers auto-discover paths?",
     topology: {
       devices: [
         D('h1', 'laptop', 'Laptop-1', 200, 460),
@@ -311,11 +323,11 @@ export const CONCEPTS: Concept[] = [
           { from: 'r2', to: 'r3', label: 'LSA', color: PURPLE },
           { from: 'r3', to: 'r1', label: 'LSA', color: PURPLE },
         ],
-        say: 'OSPF routers advertise what they are connected to — link-state advertisements. Every router ends up with a full map of the network.',
+        say: 'OSPF routers advertise what they are connected to. Link-state advertisements. Every router ends up with a full map of the network.',
       },
       { kind: 'flight', from: 'h1', to: 'h2', label: 'shortest path', color: GREEN, say: 'Then each one runs "Open Shortest Path First" on that map and picks the best route. Here: straight across the bottom.' },
       { kind: 'say', text: 'If the bottom link dies, OSPF recalculates within seconds and traffic flows over the top through Router-2. No human involved.' },
-      { kind: 'say', text: 'OSPF runs INSIDE one organization. Problem: how do DIFFERENT companies\' networks — entire ISPs — talk to each other? → BGP' },
+      { kind: 'say', text: 'OSPF runs INSIDE one organization. Problem: how do DIFFERENT companies\' networks (entire ISPs) talk to each other? → BGP' },
     ],
     tryIt: 'Hands-on: delete the bottom Router-1↔Router-3 cable, ping Laptop-1 → Server-1 again, and watch the packet reroute over the top.',
   },
@@ -339,7 +351,7 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'say', text: 'The internet is not one network. It is ~80,000 independent networks (autonomous systems) — ISPs, clouds, universities — that agree to exchange traffic.' },
+      { kind: 'say', text: 'The internet is not one network. It is ~80,000 independent networks (autonomous systems): ISPs, clouds, universities: that agree to exchange traffic.' },
       {
         kind: 'flights',
         flights: [
@@ -371,12 +383,12 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'echo request', say: 'Ping sends an ICMP echo request: "are you there?"' },
-      { kind: 'flight', from: 'srv', to: 'l1', label: 'echo reply', color: GREEN, say: 'A healthy host answers with an echo reply. The round-trip time is your latency.' },
-      { kind: 'say', text: 'ICMP is the network\'s control channel — it is not TCP and not UDP. It also carries errors like "destination unreachable" and "TTL expired" (that one powers traceroute).' },
-      { kind: 'say', text: 'Problem: ping proves the host is alive — but real data needs to arrive complete, in order, with no gaps. → TCP' },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'echo request', say: 'Ping sends an ICMP echo request: "are you there?"', notes: [{ at: 'l1', text: '“Are you there?” ICMP echo request', side: 'top' }] },
+      { kind: 'flight', from: 'srv', to: 'l1', label: 'echo reply', color: GREEN, say: 'A healthy host answers with an echo reply. The round-trip time is your latency.', notes: [{ at: 'srv', text: 'Echo reply, round-trip time = latency', side: 'top' }] },
+      { kind: 'say', text: 'ICMP is the network\'s control channel: it is not TCP and not UDP. It also carries errors like "destination unreachable" and "TTL expired" (that one powers traceroute).' },
+      { kind: 'say', text: 'Problem: ping proves the host is alive. But real data needs to arrive complete, in order, with no gaps. → TCP' },
     ],
-    tryIt: 'Use the Ping tool on anything — that is literally this concept. Try pinging a switch and read why it fails.',
+    tryIt: 'Use the Ping tool on anything. That is literally this concept. Try pinging a switch and read why it fails.',
   },
   {
     id: 'tcp',
@@ -394,18 +406,18 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'SYN', say: 'TCP starts every conversation with a handshake. Step 1 — SYN: "I want to talk."' },
-      { kind: 'flight', from: 'srv', to: 'l1', label: 'SYN-ACK', color: GREEN, say: 'Step 2 — SYN-ACK: "Heard you, ready."' },
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'ACK', say: 'Step 3 — ACK: "Confirmed." Connection established. Three packets, every single time.' },
-      { kind: 'say', text: 'From here every segment is numbered and acknowledged. Lost? Retransmitted. Out of order? Reassembled. Web pages, email, file transfers — anything that must be perfect rides TCP.' },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'SYN', say: 'TCP starts every conversation with a handshake. Step 1: SYN: "I want to talk."', notes: [{ at: 'l1', text: '1) SYN: “I want to talk”', side: 'top' }] },
+      { kind: 'flight', from: 'srv', to: 'l1', label: 'SYN-ACK', color: GREEN, say: 'Step 2: SYN-ACK: "Heard you, ready."', notes: [{ at: 'srv', text: '2) SYN-ACK: “Heard you, ready”', side: 'top' }] },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'ACK', say: 'Step 3: ACK: "Confirmed." Connection established. Three packets, every single time.', notes: [{ at: 'l1', text: '3) ACK: “Confirmed”, connection open', side: 'bottom' }] },
+      { kind: 'say', text: 'From here every segment is numbered and acknowledged. Lost? Retransmitted. Out of order? Reassembled. Web pages, email, file transfers: anything that must be perfect rides TCP.' },
       { kind: 'say', text: 'Problem: all those receipts cost time. A video call would rather drop a frame than wait for one. → UDP' },
     ],
-    tryIt: 'Ping the server and imagine every packet getting a numbered receipt — that is the TCP mindset.',
+    tryIt: 'Ping the server and imagine every packet getting a numbered receipt. That is the TCP mindset.',
   },
   {
     id: 'udp',
     title: 'UDP',
-    problem: "TCP is too slow for live traffic — what's the fast alternative?",
+    problem: "TCP is too slow for live traffic. What's the fast alternative?",
     topology: {
       devices: [
         D('l1', 'laptop', 'Laptop-1', 280, 320),
@@ -426,17 +438,18 @@ export const CONCEPTS: Concept[] = [
           { from: 'l1', to: 'srv', label: 'datagram' },
         ],
         say: 'UDP just sends. No handshake, no acknowledgments, no order, no retransmits. Fire and forget.',
+        notes: [{ at: 'srv', text: 'No handshake, no receipts. A lost one is just gone', side: 'top' }],
       },
-      { kind: 'say', text: 'A lost datagram is simply gone — and for live video, voice, and games that is CORRECT. A late frame is worse than a missing one.' },
-      { kind: 'say', text: 'DNS also uses UDP: one tiny question, one tiny answer — a TCP handshake would triple the cost.' },
+      { kind: 'say', text: 'A lost datagram is simply gone. And for live video, voice, and games that is CORRECT. A late frame is worse than a missing one.' },
+      { kind: 'say', text: 'DNS also uses UDP: one tiny question, one tiny answer. A TCP handshake would triple the cost.' },
       { kind: 'say', text: 'Problem: your laptop runs TCP and UDP for dozens of apps at once. When a packet arrives… which app gets it? → Ports' },
     ],
-    tryIt: 'Same topology as TCP on purpose — the difference is not the wiring, it is the rules of the conversation.',
+    tryIt: 'Same topology as TCP on purpose. The difference is not the wiring, it is the rules of the conversation.',
   },
   {
     id: 'ports',
     title: 'Ports',
-    problem: 'One device, many apps — how does traffic find the right one?',
+    problem: 'One device, many apps: how does traffic find the right one?',
     topology: {
       devices: [
         D('l1', 'laptop', 'Laptop-1', 280, 320),
@@ -458,6 +471,7 @@ export const CONCEPTS: Concept[] = [
           { from: 'l1', to: 'srv', label: ':22', color: PURPLE },
         ],
         say: 'Same server, three doors: 443 → the web server, 53 → DNS, 22 → SSH. One machine, many services.',
+        notes: [{ at: 'srv', text: '443 web · 53 DNS · 22 SSH, same IP, different doors', side: 'top' }],
       },
       { kind: 'say', text: 'Know the exam set: 22 SSH · 25 SMTP · 53 DNS · 67/68 DHCP · 80 HTTP · 443 HTTPS · 3389 RDP.' },
       { kind: 'say', text: 'Problem: every open door is a way in. Something must decide which doors are open and to whom. → Firewall' },
@@ -482,17 +496,17 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'ping', say: 'A firewall sits inline and inspects every packet against its rules. Right now ICMP is allowed — the ping passes.' },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'ping', say: 'A firewall sits inline and inspects every packet against its rules. Right now ICMP is allowed. The ping passes.', notes: [{ at: 'fw', text: 'Inspects every packet against its rules', side: 'top' }] },
       { kind: 'set', id: 'fw', blockIcmp: true, say: 'Now the admin adds a rule: BLOCK ICMP.' },
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'ping', color: RED, stopAt: 'fw', say: 'Same ping, new rule: the firewall drops it. The sender just sees "request timed out" — firewalls do not apologize.' },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'ping', color: RED, stopAt: 'fw', say: 'Same ping, new rule: the firewall drops it. The sender just sees "request timed out". Firewalls do not apologize.', notes: [{ at: 'fw', text: 'Rule says BLOCK ICMP, dropped here', side: 'top' }] },
       { kind: 'say', text: 'Real rules match source, destination, port, and protocol. "Allow 443 in, deny everything else" is the classic default. Problem: allowed traffic can still be READ in transit. → TLS' },
     ],
-    tryIt: 'Select Firewall-1, toggle "Block ICMP", and ping the server — then unblock it and ping again.',
+    tryIt: 'Select Firewall-1, toggle "Block ICMP", and ping the server, then unblock it and ping again.',
   },
   {
     id: 'tls',
     title: 'TLS',
-    problem: 'The connection works — but anyone in the middle can read it.',
+    problem: 'The connection works, but anyone in the middle can read it.',
     topology: {
       devices: [
         D('l1', 'laptop', 'Laptop-1', 240, 320),
@@ -508,9 +522,9 @@ export const CONCEPTS: Concept[] = [
     },
     steps: [
       { kind: 'flight', from: 'l1', to: 'srv', label: 'pass=hunter2', color: RED, say: 'Plain HTTP: your password crosses the network as readable text.' },
-      { kind: 'highlight', ids: ['hak'], say: 'Anyone positioned on the path — rogue Wi-Fi, tapped switch, compromised router — reads it straight off the wire.' },
+      { kind: 'highlight', ids: ['hak'], say: 'Anyone positioned on the path. Rogue Wi-Fi, tapped switch, compromised router, reads it straight off the wire.' },
       { kind: 'flight', from: 'l1', to: 'srv', label: '🔒 8f3a91…c2', color: GREEN, say: 'TLS encrypts the connection first: client and server agree on keys, then everything becomes ciphertext. Same eavesdropper now sees noise.' },
-      { kind: 'say', text: 'The browser padlock = TLS. SSL is its retired ancestor — same job, old name. Problem: TLS protects one connection. What about ALL traffic between two offices? → VPN' },
+      { kind: 'say', text: 'The browser padlock = TLS. SSL is its retired ancestor. Same job, old name. Problem: TLS protects one connection. What about ALL traffic between two offices? → VPN' },
     ],
     tryIt: 'Recreate it: laptop, switch, server, plus a "hacker" PC hanging off the switch. Position is power.',
   },
@@ -536,15 +550,15 @@ export const CONCEPTS: Concept[] = [
     steps: [
       { kind: 'say', text: 'Two offices, public internet between them. Every packet crossing the middle is exposed infrastructure you do not own.' },
       { kind: 'flight', from: 'r1', to: 'r2', label: '🔒 tunnel', color: GREEN, say: 'A VPN builds an encrypted tunnel between the two routers. Packets are encrypted, wrapped inside new packets, and unwrapped on the far side.' },
-      { kind: 'flight', from: 'h1', to: 'h2', label: '🔒 anything', color: GREEN, say: 'Now EVERYTHING between the sites rides the tunnel — every app, every protocol. The two LANs behave like one private network. That is the V and the P.' },
+      { kind: 'flight', from: 'h1', to: 'h2', label: '🔒 anything', color: GREEN, say: 'Now EVERYTHING between the sites rides the tunnel. Every app, every protocol. The two LANs behave like one private network. That is the V and the P.' },
       { kind: 'say', text: 'Your personal VPN does the same: an encrypted tunnel from your laptop to a provider, hiding traffic from the local network. Problem: we still type names, not IPs. → DNS' },
     ],
-    tryIt: 'Build two LANs joined through a middle "Internet" router — then ping across and imagine the tunnel wrapping every hop in the middle.',
+    tryIt: 'Build two LANs joined through a middle "Internet" router, then ping across and imagine the tunnel wrapping every hop in the middle.',
   },
   {
     id: 'dns',
     title: 'DNS',
-    problem: 'Users type google.com — how does a name become an IP?',
+    problem: 'Users type google.com: how does a name become an IP?',
     topology: {
       devices: [
         D('l1', 'laptop', 'Laptop-1', 240, 320),
@@ -559,17 +573,17 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'flight', from: 'l1', to: 'dns', label: 'A? google.com', color: BLUE, say: 'You type a name. Your device asks its DNS server (port 53): "what is the IP for google.com?"' },
-      { kind: 'flight', from: 'dns', to: 'l1', label: '142.250.65.78', color: GREEN, say: 'DNS answers with the IP — the internet\'s phone book. Answers get cached so the next lookup is instant.' },
-      { kind: 'flight', from: 'l1', to: 'web', label: 'connect', say: 'Only NOW can the real connection start, using the returned IP. Every website visit begins with this invisible lookup.' },
+      { kind: 'flight', from: 'l1', to: 'dns', label: 'A? google.com', color: BLUE, say: 'You type a name. Your device asks its DNS server (port 53): "what is the IP for google.com?"', notes: [{ at: 'dns', text: '“What is the IP for google.com?” (port 53)', side: 'bottom' }] },
+      { kind: 'flight', from: 'dns', to: 'l1', label: '142.250.65.78', color: GREEN, say: 'DNS answers with the IP. The internet\'s phone book. Answers get cached so the next lookup is instant.', notes: [{ at: 'l1', text: 'Gets back 142.250.65.78, then caches it', side: 'top' }] },
+      { kind: 'flight', from: 'l1', to: 'web', label: 'connect', say: 'Only NOW can the real connection start, using the returned IP. Every website visit begins with this invisible lookup.', notes: [{ at: 'web', text: 'Only now does the real connection start', side: 'top' }] },
       { kind: 'say', text: '"It\'s always DNS" is a sysadmin proverb: when the IP works but the name does not, you know the suspect. Problem: connected to the server… how do we actually ask for the page? → HTTP' },
     ],
-    tryIt: 'Build it: a laptop, a switch, a DNS server, and a web server. Ping DNS-1 first, then Web-1 — query order matters.',
+    tryIt: 'Build it: a laptop, a switch, a DNS server, and a web server. Ping DNS-1 first, then Web-1. Query order matters.',
   },
   {
     id: 'http',
     title: 'HTTP & HTTPS',
-    problem: 'DNS gave you the IP — how does the browser request the page?',
+    problem: 'DNS gave you the IP. How does the browser request the page?',
     topology: {
       devices: [
         D('l1', 'laptop', 'Laptop-1', 280, 320),
@@ -582,9 +596,9 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'flight', from: 'l1', to: 'srv', label: 'GET /index.html', say: 'HTTP is a request language. The browser asks: GET /index.html — "give me this page."' },
-      { kind: 'flight', from: 'srv', to: 'l1', label: '200 OK', color: GREEN, say: 'The server answers with a status code and the content. 200 OK — here is your page. (404 = no such page; 500 = server fell over.)' },
-      { kind: 'say', text: 'HTTPS is the same conversation tunneled through TLS — the padlock means the GET and the response were encrypted. Port 80 plain, port 443 encrypted.' },
+      { kind: 'flight', from: 'l1', to: 'srv', label: 'GET /index.html', say: 'HTTP is a request language. The browser asks: GET /index.html: "give me this page."' },
+      { kind: 'flight', from: 'srv', to: 'l1', label: '200 OK', color: GREEN, say: 'The server answers with a status code and the content. 200 OK: here is your page. (404 = no such page; 500 = server fell over.)' },
+      { kind: 'say', text: 'HTTPS is the same conversation tunneled through TLS. The padlock means the GET and the response were encrypted. Port 80 plain, port 443 encrypted.' },
       { kind: 'say', text: 'Problem: one popular server, a million browsers sending GETs. One machine cannot answer them all. → Load balancer' },
     ],
     tryIt: 'Ping Web-1 and narrate it to yourself as a GET: request out, response back, status code read.',
@@ -592,7 +606,7 @@ export const CONCEPTS: Concept[] = [
   {
     id: 'loadbalancer',
     title: 'Load balancer',
-    problem: "One server can't handle everyone — how do you distribute traffic?",
+    problem: "One server can't handle everyone: how do you distribute traffic?",
     topology: {
       devices: [
         D('l1', 'laptop', 'Client-1', 220, 320),
@@ -609,7 +623,7 @@ export const CONCEPTS: Concept[] = [
       ],
     },
     steps: [
-      { kind: 'say', text: 'Clients never talk to the web servers directly. They all hit ONE front address — the load balancer.' },
+      { kind: 'say', text: 'Clients never talk to the web servers directly. They all hit ONE front address. The load balancer.' },
       {
         kind: 'flights',
         flights: [
@@ -617,12 +631,12 @@ export const CONCEPTS: Concept[] = [
           { from: 'l1', to: 's2', label: 'req 2', color: BLUE },
           { from: 'l1', to: 's3', label: 'req 3', color: PURPLE },
         ],
-        say: 'The LB spreads requests across the pool — round robin here, or by least connections, or by response time.',
+        say: 'The LB spreads requests across the pool. Round robin here, or by least connections, or by response time.',
       },
-      { kind: 'say', text: 'It also health-checks the pool. If Web-2 dies, traffic silently flows to Web-1 and Web-3. Users notice nothing — that is high availability.' },
+      { kind: 'say', text: 'It also health-checks the pool. If Web-2 dies, traffic silently flows to Web-1 and Web-3. Users notice nothing: that is high availability.' },
       { kind: 'say', text: 'And that completes the chain: a cable became Ethernet, became switching, routing, the internet, encryption, names, and finally scale. Every concept exists because the previous one hit a wall.' },
     ],
-    tryIt: 'Build the fan-out yourself: one client, one "LB" router, three servers — then ping each server through it.',
+    tryIt: 'Build the fan-out yourself: one client, one "LB" router, three servers, then ping each server through it.',
   },
 ];
 
