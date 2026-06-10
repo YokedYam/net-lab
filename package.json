@@ -1,0 +1,23 @@
+{
+  "name": "net-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Net+ Visual Lab — a tiny Packet Tracer for learning networking, inspired by Tech With Diego's Network Lab 101",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^7.0.0"
+  }
+}
