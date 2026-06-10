@@ -1,13 +1,14 @@
 {
   "name": "net-lab",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Net+ Visual Lab — a tiny Packet Tracer for learning networking, inspired by Tech With Diego's Network Lab 101",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && TOKEN=$(az staticwebapp secrets list --name net-lab --resource-group personal-portfolio-rg --query properties.apiKey -o tsv) && npx --yes @azure/static-web-apps-cli deploy ./dist --deployment-token $TOKEN --env production"
   },
   "dependencies": {
     "react": "^19.0.0",

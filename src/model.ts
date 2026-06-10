@@ -204,6 +204,35 @@ export function computeNetworks(devices: Device[], links: Link[]): NetInfo {
   return { segments, addrs, segsOf };
 }
 
+export function findPath(srcId: string, dstId: string, links: Link[]): string[] | null {
+  if (srcId === dstId) return [srcId];
+  const adj = new Map<string, string[]>();
+  for (const l of links) {
+    if (!adj.has(l.a)) adj.set(l.a, []);
+    if (!adj.has(l.b)) adj.set(l.b, []);
+    adj.get(l.a)!.push(l.b);
+    adj.get(l.b)!.push(l.a);
+  }
+  const prev = new Map<string, string>();
+  const seen = new Set([srcId]);
+  const queue = [srcId];
+  while (queue.length) {
+    const cur = queue.shift()!;
+    if (cur === dstId) break;
+    for (const nb of adj.get(cur) ?? []) {
+      if (!seen.has(nb)) {
+        seen.add(nb);
+        prev.set(nb, cur);
+        queue.push(nb);
+      }
+    }
+  }
+  if (!seen.has(dstId)) return null;
+  const path: string[] = [dstId];
+  while (path[0] !== srcId) path.unshift(prev.get(path[0])!);
+  return path;
+}
+
 export interface PingPlan {
   path: string[];
   stopIndex: number;
@@ -243,32 +272,9 @@ export function planPing(
   if (dstAddrs.length === 0)
     return fail(`${dst.name} has no IP — it isn't connected to any network yet. Cable it to a switch or router first.`);
 
-  const adj = new Map<string, string[]>();
-  for (const l of links) {
-    if (!adj.has(l.a)) adj.set(l.a, []);
-    if (!adj.has(l.b)) adj.set(l.b, []);
-    adj.get(l.a)!.push(l.b);
-    adj.get(l.b)!.push(l.a);
-  }
-  const prev = new Map<string, string>();
-  const seen = new Set([srcId]);
-  const queue = [srcId];
-  while (queue.length) {
-    const cur = queue.shift()!;
-    if (cur === dstId) break;
-    for (const nb of adj.get(cur) ?? []) {
-      if (!seen.has(nb)) {
-        seen.add(nb);
-        prev.set(nb, cur);
-        queue.push(nb);
-      }
-    }
-  }
-  if (!seen.has(dstId))
+  const path = findPath(srcId, dstId, links);
+  if (!path)
     return fail(`Destination unreachable — there is no path from ${src.name} to ${dst.name}. Are they cabled together (through a router)?`, 'error');
-
-  const path: string[] = [dstId];
-  while (path[0] !== srcId) path.unshift(prev.get(path[0])!);
 
   const srcSegs = net.segsOf.get(srcId) ?? new Set<string>();
   const dstSegs = net.segsOf.get(dstId) ?? new Set<string>();

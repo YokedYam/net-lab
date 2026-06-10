@@ -10,7 +10,13 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         </div>
         <p>
           A tiny Cisco Packet Tracer. Place devices, cable them together, then ping and watch the
-          packet hop the path while the event log narrates what every device is doing.
+          packet hop the path while the event log narrates what every device is doing. Scroll to
+          zoom, drag the background to pan.
+        </p>
+        <p>
+          <b>Two modes:</b> the <b>Build</b> tab is the free sandbox below. The <b>Learn</b> tab
+          plays guided demos of all 21 concepts from the networking chain — Ethernet to load
+          balancer — each ending with a “Try it yourself” hands-on task.
         </p>
         <ol>
           <li>
