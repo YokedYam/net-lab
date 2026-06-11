@@ -4,6 +4,7 @@ import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq } from '../pbqDa
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { SubnetField } from '../study';
 import { conceptById } from '../concepts';
+import { generateSimilarPbq } from '../ai';
 
 interface Part {
   label: string;
@@ -46,7 +47,26 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function PbqMode({ onResource }: { onResource: (conceptId: string) => void }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const pbq = PBQS.find((p) => p.id === activeId) ?? null;
+  const [gen, setGen] = useState<Pbq | null>(null);
+  const [genBusy, setGenBusy] = useState(false);
+  const [genErr, setGenErr] = useState('');
+  const source = PBQS.find((p) => p.id === activeId) ?? null;
+  // A generated PBQ takes over the runner until the student leaves or
+  // generates again. Strictly button-triggered.
+  const pbq = gen ?? source;
+
+  const genSimilar = async () => {
+    if (!pbq || genBusy) return;
+    setGenBusy(true);
+    setGenErr('');
+    const res = await generateSimilarPbq(pbq);
+    setGenBusy(false);
+    if (!res.ok) {
+      setGenErr(res.message);
+      return;
+    }
+    setGen(res.value);
+  };
 
   if (!pbq) {
     return (
@@ -62,7 +82,7 @@ export function PbqMode({ onResource }: { onResource: (conceptId: string) => voi
             {PBQS.map((p) => {
               const accent = DOMAINS.find((d) => d.id === p.domain)?.color ?? '#3b82f6';
               return (
-                <button key={p.id} className="pbq-tile" onClick={() => setActiveId(p.id)} style={{ '--accent': accent } as React.CSSProperties}>
+                <button key={p.id} className="pbq-tile" onClick={() => { setActiveId(p.id); setGen(null); setGenErr(''); }} style={{ '--accent': accent } as React.CSSProperties}>
                   <span className="pbq-kind">{KIND_LABEL[p.kind]}</span>
                   <span className="pbq-tile-title">{p.title}</span>
                   <span className="pbq-tile-domain" style={{ color: accent }}>
@@ -77,10 +97,24 @@ export function PbqMode({ onResource }: { onResource: (conceptId: string) => voi
     );
   }
 
-  return <PbqRunner key={pbq.id} pbq={pbq} onBack={() => setActiveId(null)} onResource={onResource} />;
+  return (
+    <PbqRunner
+      key={pbq.id}
+      pbq={pbq}
+      onBack={() => {
+        setActiveId(null);
+        setGen(null);
+        setGenErr('');
+      }}
+      onResource={onResource}
+      onGenerate={genSimilar}
+      genBusy={genBusy}
+      genErr={genErr}
+    />
+  );
 }
 
-function PbqRunner({ pbq, onBack, onResource }: { pbq: Pbq; onBack: () => void; onResource: (c: string) => void }) {
+function PbqRunner({ pbq, onBack, onResource, onGenerate, genBusy, genErr }: { pbq: Pbq; onBack: () => void; onResource: (c: string) => void; onGenerate: () => void; genBusy: boolean; genErr: string }) {
   const [grade, setGrade] = useState<Grade | null>(null);
   const accent = DOMAINS.find((d) => d.id === pbq.domain)?.color ?? '#3b82f6';
 
@@ -91,6 +125,7 @@ function PbqRunner({ pbq, onBack, onResource }: { pbq: Pbq; onBack: () => void; 
           <span className="qs-domain" style={{ color: accent }}>
             {KIND_LABEL[pbq.kind]} · {pbq.domain} {domainName(pbq.domain)}
           </span>
+          {pbq.ai && <span className="qs-ai">AI generated</span>}
         </div>
         <div className="qs-right">
           <button className="btn small" onClick={onBack}>
@@ -110,7 +145,7 @@ function PbqRunner({ pbq, onBack, onResource }: { pbq: Pbq; onBack: () => void; 
         {pbq.kind === 'order' && <OrderBody pbq={pbq} grade={grade} setGrade={setGrade} />}
       </div>
 
-      {grade && <Results grade={grade} pbq={pbq} onResource={onResource} onRetry={() => setGrade(null)} />}
+      {grade && <Results grade={grade} pbq={pbq} onResource={onResource} onRetry={() => setGrade(null)} onGenerate={onGenerate} genBusy={genBusy} genErr={genErr} />}
     </div>
   );
 }
@@ -333,7 +368,7 @@ function SubmitBar({ onSubmit, disabled }: { onSubmit: () => void; disabled: boo
   );
 }
 
-function Results({ grade, pbq, onResource, onRetry }: { grade: Grade; pbq: Pbq; onResource: (c: string) => void; onRetry: () => void }) {
+function Results({ grade, pbq, onResource, onRetry, onGenerate, genBusy, genErr }: { grade: Grade; pbq: Pbq; onResource: (c: string) => void; onRetry: () => void; onGenerate: () => void; genBusy: boolean; genErr: string }) {
   const pct = Math.round((grade.correct / grade.total) * 100);
   const perfect = grade.correct === grade.total;
   const resources = (pbq.resources ?? []).map((id) => conceptById(id)).filter((c): c is NonNullable<typeof c> => !!c);
@@ -388,7 +423,11 @@ function Results({ grade, pbq, onResource, onRetry }: { grade: Grade; pbq: Pbq; 
         <button className="big-btn" onClick={onRetry}>
           Try again
         </button>
+        <button className="big-btn ghost" onClick={onGenerate} disabled={genBusy}>
+          {genBusy ? 'Writing a PBQ…' : 'Generate a similar PBQ'}
+        </button>
       </div>
+      {genErr && <p className="gen-err">{genErr}</p>}
     </div>
   );
 }

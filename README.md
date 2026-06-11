@@ -30,6 +30,15 @@ ease in. Visuals inspired by Tech With Diego's "Every Networking Concept Explain
   (sequence troubleshooting steps). Each is graded deterministically in the browser with
   per-item feedback, a generated insight on submit, and resource links.
 
+## AI practice (button-triggered, never automatic)
+
+Miss a question or just want more reps? Two buttons, by design only when you ask:
+
+- **Generate a similar question** (Quiz): writes one fresh question on the same topic at the same difficulty, queued up next with an "AI generated" badge.
+- **Generate a similar PBQ** (PBQs, after grading): writes a fresh PBQ of the same kind. Subnet drills don't even need the model; the app rolls new numbers locally, instantly.
+
+The generator is an Azure Function (`api/generate/`) proxying my Azure OpenAI deployment over the v1 Responses API, with per-minute, per-IP-daily, and global-daily rate limits so the budget stays at pennies. Generated items are validated server-side and client-side against the exact data shapes the app grades with, so a malformed generation can never reach the screen. No keys in this repo; they live in Static Web Apps application settings.
+
 ## Run it
 
 ```sh

@@ -4,6 +4,7 @@ import type { QuizQuestion } from '../quizData';
 import { DOMAINS, domainName } from '../study';
 import type { DomainId } from '../study';
 import { conceptById } from '../concepts';
+import { generateSimilarQuestion } from '../ai';
 
 type Filter = DomainId | 'all';
 
@@ -26,6 +27,8 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
   const [answered, setAnswered] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [missed, setMissed] = useState<Record<string, number>>({});
+  const [genBusy, setGenBusy] = useState(false);
+  const [genErr, setGenErr] = useState('');
 
   const pool = useMemo(
     () => (filter === 'all' ? QUIZ : QUIZ.filter((q) => q.domain === filter)),
@@ -59,6 +62,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
 
   const next = () => {
     setPicked(null);
+    setGenErr('');
     if (pos + 1 >= queue.length) {
       setQueue(shuffle(pool));
       setPos(0);
@@ -66,6 +70,23 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
     } else {
       setPos((p) => p + 1);
     }
+  };
+
+  // Strictly button-triggered: writes one new question similar to the current
+  // one and queues it next, so "extra practice" is always an explicit ask.
+  const genSimilar = async () => {
+    if (!q || genBusy) return;
+    setGenBusy(true);
+    setGenErr('');
+    const res = await generateSimilarQuestion(q);
+    setGenBusy(false);
+    if (!res.ok) {
+      setGenErr(res.message);
+      return;
+    }
+    setQueue((prev) => [...prev.slice(0, pos + 1), res.value, ...prev.slice(pos + 1)]);
+    setPicked(null);
+    setPos((p) => p + 1);
   };
 
   useEffect(() => {
@@ -137,6 +158,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
             {q.domain} {domainName(q.domain)}
           </span>
           <span className="qs-topic">· {q.topic}</span>
+          {q.ai && <span className="qs-ai">AI generated</span>}
         </div>
         <div className="qs-right">
           <span className="qs-score">
@@ -178,10 +200,14 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
                   Review: {q.resourceLabel ?? `${linkedConcept.title} demo`} →
                 </button>
               )}
+              <button className="big-btn ghost" onClick={genSimilar} disabled={genBusy}>
+                {genBusy ? 'Writing a question…' : 'Generate a similar question'}
+              </button>
               <button className="big-btn" onClick={next}>
                 {isRight ? 'Next question →' : 'Keep quizzing →'}
               </button>
             </div>
+            {genErr && <p className="gen-err">{genErr}</p>}
           </div>
         )}
       </div>

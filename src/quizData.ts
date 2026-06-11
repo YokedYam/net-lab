@@ -10,6 +10,7 @@ export interface QuizQuestion {
   choices: string[];
   answer: number; // index into choices
   explanation: string; // beginner-friendly "why", with an analogy where it helps
+  ai?: boolean; // true for questions generated at runtime by the AI button
 }
 
 // A practice pool written in the scenario / "BEST answer" style the real

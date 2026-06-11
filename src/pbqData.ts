@@ -12,6 +12,7 @@ interface PbqBase {
   scenario: string;
   instruction: string;
   resources?: ConceptId[]; // demos to suggest after grading
+  ai?: boolean; // true for PBQs generated at runtime by the AI button
 }
 
 export interface MatchPbq extends PbqBase {

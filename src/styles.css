@@ -1746,3 +1746,21 @@ svg.scene text {
     align-items: stretch;
   }
 }
+
+/* ---------- AI generation (button-triggered) ---------- */
+.qs-ai {
+  font-size: 11px;
+  font-weight: 600;
+  color: #a78bfa;
+  background: #a78bfa1a;
+  border: 1px solid #a78bfa44;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.gen-err {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #f87171;
+}
