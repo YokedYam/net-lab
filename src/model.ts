@@ -10,7 +10,16 @@ export interface Device {
   x: number;
   y: number;
   blockIcmp: boolean;
+  // Manual addressing. Hosts default to 'auto' (the app assigns an IP per LAN,
+  // "DHCP did it for me"). Switch to 'static' to configure by hand and watch a
+  // wrong mask or missing gateway break the ping live.
+  ipMode?: 'auto' | 'static';
+  staticIp?: string;
+  staticMask?: string; // dotted ("255.255.255.0"), CIDR ("24"), or "/24"
+  staticGateway?: string;
 }
+
+export type DeviceConfig = Partial<Pick<Device, 'ipMode' | 'staticIp' | 'staticMask' | 'staticGateway'>>;
 
 export interface Link {
   id: string;
@@ -70,7 +79,89 @@ export function nextName(type: DeviceType, devices: Device[]): string {
 }
 
 export function makeDevice(type: DeviceType, x: number, y: number, devices: Device[]): Device {
-  return { id: uid(), type, name: nextName(type, devices), mac: randMac(), x, y, blockIcmp: false };
+  return { id: uid(), type, name: nextName(type, devices), mac: randMac(), x, y, blockIcmp: false, ipMode: 'auto' };
+}
+
+// ---------- IPv4 helpers (manual addressing) ----------
+
+export function ipToInt(ip: string): number | null {
+  const parts = ip.trim().split('.');
+  if (parts.length !== 4) return null;
+  let n = 0;
+  for (const p of parts) {
+    if (!/^\d{1,3}$/.test(p)) return null;
+    const o = parseInt(p, 10);
+    if (o > 255) return null;
+    n = (n << 8) + o;
+  }
+  return n >>> 0;
+}
+
+export function cidrToMask(cidr: number): string {
+  const m = cidr <= 0 ? 0 : (0xffffffff << (32 - cidr)) >>> 0;
+  return [(m >>> 24) & 255, (m >>> 16) & 255, (m >>> 8) & 255, m & 255].join('.');
+}
+
+// Accepts "255.255.255.0", "24", or "/24". Returns CIDR or null if invalid.
+export function parseMask(mask: string): number | null {
+  const t = mask.trim().replace(/^\//, '');
+  if (/^\d{1,2}$/.test(t)) {
+    const c = parseInt(t, 10);
+    return c >= 0 && c <= 32 ? c : null;
+  }
+  const int = ipToInt(t);
+  if (int === null) return null;
+  // A valid mask is contiguous 1s then 0s.
+  const inv = (~int >>> 0) + 1;
+  if ((inv & (inv - 1)) !== 0 && int !== 0xffffffff) return null;
+  let cidr = 0;
+  let v = int;
+  while (v & 0x80000000) {
+    cidr++;
+    v = (v << 1) >>> 0;
+  }
+  return cidr;
+}
+
+export interface EffAddr {
+  ip: string;
+  cidr: number;
+  mask: string;
+  gateway?: string;
+  source: 'auto' | 'static';
+  invalid?: 'ip' | 'mask';
+}
+
+// The address a device actually uses right now: hand-configured if static,
+// otherwise the auto-assigned one from computeNetworks.
+export function effectiveAddr(d: Device, net: NetInfo): EffAddr | null {
+  if (d.ipMode === 'static') {
+    if (!d.staticIp || ipToInt(d.staticIp) === null) {
+      return { ip: d.staticIp ?? '', cidr: 24, mask: cidrToMask(24), gateway: d.staticGateway, source: 'static', invalid: 'ip' };
+    }
+    const cidr = d.staticMask ? parseMask(d.staticMask) : 24;
+    if (cidr === null) {
+      return { ip: d.staticIp, cidr: 24, mask: cidrToMask(24), gateway: d.staticGateway, source: 'static', invalid: 'mask' };
+    }
+    return { ip: d.staticIp, cidr, mask: cidrToMask(cidr), gateway: d.staticGateway?.trim() || undefined, source: 'static' };
+  }
+  const addrs = net.addrs.get(d.id);
+  if (!addrs || addrs.length === 0) return null;
+  const seg = net.segments.find((s) => s.id === addrs[0].segId);
+  const cidr = seg?.kind === 'p2p' ? 30 : 24;
+  return { ip: addrs[0].ip, cidr, mask: cidrToMask(cidr), gateway: seg?.gatewayIp, source: 'auto' };
+}
+
+// Same broadcast domain per a host's own mask: how a host decides "local vs
+// route to the gateway". Uses the source's mask on purpose — that's the bug
+// when someone fat-fingers a /16 onto a /24 network.
+export function sameSubnet(a: EffAddr, b: EffAddr, useMask: 'a' | 'b' = 'a'): boolean {
+  const ai = ipToInt(a.ip);
+  const bi = ipToInt(b.ip);
+  if (ai === null || bi === null) return false;
+  const cidr = useMask === 'a' ? a.cidr : b.cidr;
+  const m = cidr <= 0 ? 0 : (0xffffffff << (32 - cidr)) >>> 0;
+  return ((ai & m) >>> 0) === ((bi & m) >>> 0);
 }
 
 export interface Segment {
@@ -265,25 +356,37 @@ export function planPing(
     }
   }
 
-  const srcAddrs = net.addrs.get(srcId) ?? [];
-  const dstAddrs = net.addrs.get(dstId) ?? [];
-  if (srcAddrs.length === 0)
+  const srcEff = effectiveAddr(src, net);
+  const dstEff = effectiveAddr(dst, net);
+
+  if (src.ipMode === 'static' && srcEff?.invalid === 'ip')
+    return fail(`${src.name} has a static IP set but "${src.staticIp}" isn't a valid IPv4 address. Fix it in the details panel.`, 'error');
+  if (src.ipMode === 'static' && srcEff?.invalid === 'mask')
+    return fail(`${src.name}'s subnet mask "${src.staticMask}" isn't valid. Use a dotted mask like 255.255.255.0 or a CIDR like 24.`, 'error');
+  if (!srcEff)
     return fail(`${src.name} has no IP: it isn't connected to any network yet. Cable it to a switch or router first.`);
-  if (dstAddrs.length === 0)
+  if (dst.ipMode === 'static' && dstEff?.invalid)
+    return fail(`${dst.name} has an invalid static address. Fix it before you can ping it.`, 'error');
+  if (!dstEff)
     return fail(`${dst.name} has no IP: it isn't connected to any network yet. Cable it to a switch or router first.`);
 
   const path = findPath(srcId, dstId, links);
   if (!path)
     return fail(`Destination unreachable: there is no path from ${src.name} to ${dst.name}. Are they cabled together (through a router)?`, 'error');
 
-  const srcSegs = net.segsOf.get(srcId) ?? new Set<string>();
-  const dstSegs = net.segsOf.get(dstId) ?? new Set<string>();
-  const sameSubnet = [...srcSegs].some((s) => dstSegs.has(s));
-  const dstIp = dstAddrs[0].ip;
-  const segById = new Map(net.segments.map((s) => [s.id, s]));
-  const srcSeg = segById.get([...srcSegs][0]);
+  const dstIp = dstEff.ip;
   const segOfPair = (x: string, y: string): Segment | undefined =>
     net.segments.find((s) => s.memberIds.includes(x) && s.memberIds.includes(y));
+  const netLabel = (e: EffAddr): string => {
+    const ai = ipToInt(e.ip);
+    if (ai === null) return `${e.ip}/${e.cidr}`;
+    const m = e.cidr <= 0 ? 0 : (0xffffffff << (32 - e.cidr)) >>> 0;
+    const nw = (ai & m) >>> 0;
+    return `${[(nw >>> 24) & 255, (nw >>> 16) & 255, (nw >>> 8) & 255, nw & 255].join('.')}/${e.cidr}`;
+  };
+  const pathHasRouter = path.slice(1, -1).some((id) => byId.get(id)?.type === 'router');
+  const local = sameSubnet(srcEff, dstEff, 'a');
+  const dstSeesLocal = sameSubnet(dstEff, srcEff, 'b');
 
   const eventsAt = new Map<number, PlanEvent[]>();
   const put = (i: number, text: string, kind: LogKind = 'info') => {
@@ -292,12 +395,29 @@ export function planPing(
   };
 
   put(0, `${src.name} → ping ${dstIp} (${dst.name})`, 'system');
-  if (sameSubnet) {
-    put(0, `${src.name}: ${dst.name} is on my subnet (${srcSeg?.subnet}). ARP for its MAC, then send the frame directly.`);
-  } else if (src.type === 'router') {
+
+  // Duplicate IP on the wire is a classic real fault.
+  const dup = devices.find(
+    (d) => d.id !== srcId && effectiveAddr(d, net)?.ip === srcEff.ip
+  );
+  if (dup) put(0, `Heads up: ${dup.name} also has ${srcEff.ip}. Duplicate IPs cause intermittent, maddening failures.`, 'warn');
+
+  if (src.type === 'router') {
     put(0, `${src.name}: ${dstIp} isn't directly connected. Consulting my routing table.`);
+  } else if (local) {
+    // Source believes the destination is on its own subnet (by its own mask).
+    if (pathHasRouter)
+      return fail(`${src.name} thinks ${dstIp} is local — ${dstIp} matches its own subnet ${netLabel(srcEff)} — so it ARPs for it directly instead of using the gateway. But ${dst.name} is across a router, so no ARP reply ever comes. Request times out. Fix: correct ${src.name}'s subnet mask.`, 'error');
+    if (!dstSeesLocal)
+      return fail(`${src.name} sent the frame straight to ${dst.name} (same wire). But ${dst.name}'s mask says ${srcEff.ip} is on a different subnet, so its reply goes to ITS gateway and never comes back. The two masks disagree. Line up the subnet masks.`, 'error');
+    put(0, `${src.name}: ${dstIp} is on my subnet (${netLabel(srcEff)}). ARP for its MAC, then send the frame directly.`);
   } else {
-    put(0, `${src.name}: ${dstIp} is on a different subnet. Sending the packet to my default gateway (${srcSeg?.gatewayIp}).`);
+    // Destination is off-subnet: the source needs a default gateway.
+    if (!srcEff.gateway)
+      return fail(`${src.name}: ${dstIp} is on a different subnet (mine is ${netLabel(srcEff)}) and I have no default gateway set. An off-subnet packet has nowhere to go. Set a default gateway.`, 'error');
+    if (!pathHasRouter)
+      return fail(`${src.name} and ${dst.name} share one wire but their IPs are in different subnets (${netLabel(srcEff)} vs ${netLabel(dstEff)}). ${src.name} sends to its gateway ${srcEff.gateway}, but there's no router here to forward it. Put them on the same subnet, or add a router.`, 'error');
+    put(0, `${src.name}: ${dstIp} is on a different subnet. Sending the packet to my default gateway (${srcEff.gateway}).`);
   }
 
   let stopIndex = path.length - 1;

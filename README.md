@@ -12,6 +12,15 @@ ease in. Visuals inspired by Tech With Diego's "Every Networking Concept Explain
 
 ## Modes
 
+- **Guided** missions are the hand-holding path: short, hands-on walkthroughs that teach an
+  idea, then make you do it on the real canvas. The screen dims, a spotlight ring lands on the
+  exact control you need, and the step only advances once you have actually done it (the app
+  checks live network state, not a "Next" click). Two missions so far:
+  - **Build your first network** places a switch, two hosts, cables them, and pings across.
+  - **Configure IP addresses by hand** switches off auto-addressing, has you type IP / mask /
+    gateway yourself, then breaks it on purpose (a second host in the wrong subnet) so the ping
+    fails and the event log tells you exactly why, then walks you through the fix. This is the
+    Network Troubleshooting domain in miniature.
 - **Visual Lab** has two sub-modes:
   - **Build** is a free sandbox: place, cable, inspect, and ping. Scroll to zoom, drag the
     background to pan.
@@ -74,6 +83,10 @@ Operations, Network Security, Network Troubleshooting). Highlights from the Visu
 - **MAC vs IP:** every device gets a MAC; only Layer 3 capable devices get IPs
 - **Switches are Layer 2:** no IP, forward frames by MAC table, one LAN only
 - **Routers join networks:** each LAN bubble gets its own /24; the router owns `.1` (default gateway)
+- **Manual addressing:** flip any host from Auto (DHCP) to Static and type its IP, subnet mask
+  (dotted or CIDR), and default gateway by hand. The ping engine is config-aware, so a too-wide
+  mask, a missing gateway, a duplicate IP, or two hosts on one wire in different subnets each
+  produce the real, specific failure instead of silently working
 - **Subnets are visual:** glowing colored bubbles drawn live around each Layer 2 segment
 - **Same-subnet vs cross-subnet pings:** direct frame vs "send to the default gateway"
 - **Firewalls:** toggle "Block ICMP" on a firewall and watch the ping die mid-path

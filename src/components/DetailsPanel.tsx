@@ -1,5 +1,5 @@
-import type { Device, NetInfo } from '../model';
-import { DEVICE_COLOR, DEVICE_LABEL, isHost } from '../model';
+import type { Device, DeviceConfig, NetInfo } from '../model';
+import { DEVICE_COLOR, DEVICE_LABEL, effectiveAddr, ipToInt, isHost, parseMask } from '../model';
 
 function Row({ k, v, warn }: { k: string; v: string; warn?: boolean }) {
   return (
@@ -14,10 +14,12 @@ export function DetailsPanel({
   device,
   net,
   onToggleIcmp,
+  onConfig,
 }: {
   device: Device | null;
   net: NetInfo;
   onToggleIcmp: (id: string, blocked: boolean) => void;
+  onConfig: (id: string, patch: DeviceConfig) => void;
 }) {
   return (
     <div className="panel details">
@@ -27,7 +29,113 @@ export function DetailsPanel({
           Click a device (with the Select tool) to inspect its MAC, IP, subnet and gateway.
         </div>
       ) : (
-        <Details device={device} net={net} onToggleIcmp={onToggleIcmp} />
+        <Details device={device} net={net} onToggleIcmp={onToggleIcmp} onConfig={onConfig} />
+      )}
+    </div>
+  );
+}
+
+function HostAddressing({
+  d,
+  net,
+  onConfig,
+}: {
+  d: Device;
+  net: NetInfo;
+  onConfig: (id: string, patch: DeviceConfig) => void;
+}) {
+  const isStatic = d.ipMode === 'static';
+  const addrs = net.addrs.get(d.id) ?? [];
+  const segOf = (segId: string) => net.segments.find((s) => s.id === segId);
+
+  const ipOk = !d.staticIp || ipToInt(d.staticIp) !== null;
+  const maskOk = !d.staticMask || parseMask(d.staticMask) !== null;
+  const gwOk = !d.staticGateway?.trim() || ipToInt(d.staticGateway) !== null;
+  const eff = isStatic ? effectiveAddr(d, net) : null;
+  const network =
+    eff && !eff.invalid && ipToInt(eff.ip) !== null
+      ? (() => {
+          const ai = ipToInt(eff.ip)!;
+          const m = eff.cidr <= 0 ? 0 : (0xffffffff << (32 - eff.cidr)) >>> 0;
+          const nw = (ai & m) >>> 0;
+          return `${[(nw >>> 24) & 255, (nw >>> 16) & 255, (nw >>> 8) & 255, nw & 255].join('.')}/${eff.cidr}`;
+        })()
+      : null;
+
+  return (
+    <div className="addr-block" data-coach="addressing">
+      <div className="seg-toggle">
+        <button
+          className={!isStatic ? 'seg on' : 'seg'}
+          onClick={() => onConfig(d.id, { ipMode: 'auto' })}
+          data-coach="ipmode-auto"
+        >
+          Auto (DHCP)
+        </button>
+        <button
+          className={isStatic ? 'seg on' : 'seg'}
+          onClick={() => onConfig(d.id, { ipMode: 'static' })}
+          data-coach="ipmode-static"
+        >
+          Static
+        </button>
+      </div>
+
+      {!isStatic ? (
+        addrs.length === 0 ? (
+          <Row k="IP" v="none: cable me to a network" warn />
+        ) : (
+          <>
+            <Row k="IP" v={addrs[0].ip} />
+            <Row k="Subnet" v={segOf(addrs[0].segId)?.subnet ?? ''} />
+            <Row
+              k="Gateway"
+              v={segOf(addrs[0].segId)?.gatewayIp ?? 'none: add a router to leave this LAN'}
+              warn={!segOf(addrs[0].segId)?.gatewayIp}
+            />
+            <p className="blurb">IP auto-assigned for this LAN. Think “DHCP did it for me”.</p>
+          </>
+        )
+      ) : (
+        <div className="ipform">
+          <label className={ipOk ? 'ipf' : 'ipf bad'}>
+            <span>IP address</span>
+            <input
+              value={d.staticIp ?? ''}
+              placeholder="192.168.1.10"
+              spellCheck={false}
+              data-coach="static-ip"
+              onChange={(e) => onConfig(d.id, { staticIp: e.target.value })}
+            />
+          </label>
+          <label className={maskOk ? 'ipf' : 'ipf bad'}>
+            <span>Subnet mask</span>
+            <input
+              value={d.staticMask ?? ''}
+              placeholder="255.255.255.0 or 24"
+              spellCheck={false}
+              data-coach="static-mask"
+              onChange={(e) => onConfig(d.id, { staticMask: e.target.value })}
+            />
+          </label>
+          <label className={gwOk ? 'ipf' : 'ipf bad'}>
+            <span>Default gateway</span>
+            <input
+              value={d.staticGateway ?? ''}
+              placeholder="192.168.1.1 (optional)"
+              spellCheck={false}
+              data-coach="static-gateway"
+              onChange={(e) => onConfig(d.id, { staticGateway: e.target.value })}
+            />
+          </label>
+          {network ? (
+            <p className="blurb">
+              This puts {d.name} in <b>{network}</b>. Anything outside it has to go through the gateway.
+            </p>
+          ) : (
+            <p className="blurb warn-text">Enter a valid IP and mask. A host can’t talk until both parse.</p>
+          )}
+        </div>
       )}
     </div>
   );
@@ -37,10 +145,12 @@ function Details({
   device: d,
   net,
   onToggleIcmp,
+  onConfig,
 }: {
   device: Device;
   net: NetInfo;
   onToggleIcmp: (id: string, blocked: boolean) => void;
+  onConfig: (id: string, patch: DeviceConfig) => void;
 }) {
   const addrs = net.addrs.get(d.id) ?? [];
   const segOf = (segId: string) => net.segments.find((s) => s.id === segId);
@@ -54,20 +164,7 @@ function Details({
         </div>
       </div>
       <Row k="MAC" v={d.mac} />
-      {isHost(d.type) &&
-        (addrs.length === 0 ? (
-          <Row k="IP" v="none: cable me to a network" warn />
-        ) : (
-          <>
-            <Row k="IP" v={addrs[0].ip} />
-            <Row k="Subnet" v={segOf(addrs[0].segId)?.subnet ?? ''} />
-            <Row
-              k="Gateway"
-              v={segOf(addrs[0].segId)?.gatewayIp ?? 'none: add a router to leave this LAN'}
-              warn={!segOf(addrs[0].segId)?.gatewayIp}
-            />
-          </>
-        ))}
+      {isHost(d.type) && <HostAddressing d={d} net={net} onConfig={onConfig} />}
       {d.type === 'router' &&
         (addrs.length === 0 ? (
           <Row k="Interfaces" v="none: cable networks to me" warn />
@@ -103,9 +200,6 @@ function Details({
             <span>Block ICMP (ping)</span>
           </label>
         </>
-      )}
-      {isHost(d.type) && addrs.length > 0 && (
-        <p className="blurb">IP auto-assigned for this LAN. Think “DHCP did it for me”.</p>
       )}
     </div>
   );

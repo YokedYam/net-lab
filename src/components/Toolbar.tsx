@@ -49,6 +49,7 @@ export function Toolbar({
               key={a.id}
               className={tool === a.id ? 'tool-btn active' : 'tool-btn'}
               onClick={() => onSelectTool(a.id)}
+              data-coach={`tool-${a.id}`}
             >
               <svg viewBox="0 0 24 24" className="tb-icon">
                 <g fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
@@ -65,6 +66,7 @@ export function Toolbar({
               className={tool === t ? 'tool-btn active' : 'tool-btn'}
               onClick={() => onSelectTool(t)}
               style={{ '--accent': DEVICE_COLOR[t] } as CSSProperties}
+              data-coach={`device-${t}`}
             >
               <svg viewBox="0 0 24 24" className="tb-icon" style={{ color: DEVICE_COLOR[t] }}>
                 <g fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">

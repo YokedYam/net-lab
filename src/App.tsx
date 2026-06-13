@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   Addr,
   Device,
+  DeviceConfig,
   DeviceType,
   Link,
   LogEntry,
@@ -17,6 +18,7 @@ import {
   DEVICE_LABEL,
   computeNetworks,
   findPath,
+  ipToInt,
   isHost,
   makeDevice,
   planPing,
@@ -37,6 +39,9 @@ import { DemoAnnotations } from './components/DemoAnnotations';
 import { QuizMode } from './components/QuizMode';
 import { Flashcards } from './components/Flashcards';
 import { PbqMode } from './components/PbqMode';
+import { GuidedHome, GuidedOverlay, markDone } from './components/Guided';
+import type { MissionApi, MissionCtx } from './missions';
+import { missionById } from './missions';
 
 const NIC_LIMIT: Record<DeviceType, number> = {
   laptop: 1,
@@ -50,9 +55,10 @@ const NIC_LIMIT: Record<DeviceType, number> = {
 const DEVICE_TOOLS: DeviceType[] = ['laptop', 'pc', 'server', 'switch', 'router', 'firewall'];
 const isDeviceTool = (t: Tool): t is DeviceType => DEVICE_TOOLS.includes(t as DeviceType);
 
-type Section = 'lab' | 'quiz' | 'flashcards' | 'pbq';
+type Section = 'lab' | 'guided' | 'quiz' | 'flashcards' | 'pbq';
 const SECTIONS: { id: Section; label: string }[] = [
   { id: 'lab', label: 'Visual Lab' },
+  { id: 'guided', label: 'Guided' },
   { id: 'quiz', label: 'Quiz' },
   { id: 'flashcards', label: 'Flashcards' },
   { id: 'pbq', label: 'PBQs' },
@@ -253,6 +259,9 @@ export default function App() {
   const [demoHighlight, setDemoHighlight] = useState<Set<string> | null>(null);
   const [demoNotes, setDemoNotes] = useState<DemoNote[] | null>(null);
   const [section, setSection] = useState<Section>('lab');
+  const [mission, setMission] = useState<{ id: string; step: number } | null>(null);
+  const [pingCount, setPingCount] = useState(0);
+  const [lastPingOk, setLastPingOk] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -365,15 +374,36 @@ export default function App() {
 
   const startPing = (aId: string, bId: string) => {
     const res = planPing(aId, bId, devices, links, net);
+    setPingCount((c) => c + 1);
     if (!res.ok) {
+      setLastPingOk(false);
       pushEvents(res.msgs);
       return;
     }
+    setLastPingOk(res.plan.outcome === 'success');
     const points = res.plan.path.map((id) => {
       const d = byId.get(id)!;
       return { x: d.x, y: d.y };
     });
     setFlight({ plan: res.plan, points, runId: Date.now() });
+  };
+
+  const configureDevice = (id: string, patch: DeviceConfig) => {
+    setDevices((ds) => ds.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+    const d = byId.get(id);
+    if (!d) return;
+    if (patch.ipMode === 'static') {
+      pushLog(`${d.name}: switched to static addressing. Type an IP, mask, and gateway by hand.`, 'system');
+    } else if (patch.ipMode === 'auto') {
+      pushLog(`${d.name}: back to automatic (DHCP-style) addressing.`, 'system');
+    } else if (d.ipMode === 'static' && (patch.staticIp !== undefined || patch.staticMask !== undefined || patch.staticGateway !== undefined)) {
+      const next = { ...d, ...patch };
+      if (next.staticIp && ipToInt(next.staticIp) !== null) {
+        const maskTxt = next.staticMask?.trim() || 'no mask';
+        const gwTxt = next.staticGateway?.trim() ? ` gw ${next.staticGateway.trim()}` : '';
+        pushLog(`${d.name} ipconfig → ${next.staticIp} mask ${maskTxt}${gwTxt}`, 'info');
+      }
+    }
   };
 
   const toggleIcmp = (id: string, blocked: boolean) => {
@@ -686,6 +716,48 @@ export default function App() {
     setTab(t);
   };
 
+  // ---------- guided missions ----------
+
+  const missionApi: MissionApi = {
+    reset: (ds = [], ls = []) => {
+      clearDemoUi();
+      sandboxRef.current = null;
+      setDevices(ds);
+      setLinks(ls);
+      setSelectedId(null);
+      setPendingId(null);
+      setFlight(null);
+      setTask(null);
+      setTab('build');
+    },
+    setTool: (t) => setTool(t),
+    setTab: (t) => setTab(t),
+    select: (id) => setSelectedId(id),
+  };
+
+  const missionCtx: MissionCtx = { devices, links, net, selectedId, tool, tab, pingCount, lastPingOk };
+
+  const startMission = (id: string) => {
+    setMission({ id, step: 0 });
+    setSection('lab');
+  };
+  const exitMission = () => setMission(null);
+  const nextStep = () => {
+    if (!mission) return;
+    const mis = missionById(mission.id);
+    if (!mis) return;
+    if (mission.step + 1 >= mis.steps.length) {
+      markDone(mission.id);
+      setMission(null);
+      setSection('guided');
+      return;
+    }
+    setMission({ id: mission.id, step: mission.step + 1 });
+  };
+  const backStep = () => {
+    if (mission && mission.step > 0) setMission({ id: mission.id, step: mission.step - 1 });
+  };
+
   const hint = useMemo(() => {
     if (tool === 'select') return 'Select: click to inspect · drag devices · drag background to pan · scroll to zoom';
     if (tool === 'cable')
@@ -746,7 +818,9 @@ export default function App() {
           </button>
         </div>
       </header>
-      {section === 'quiz' ? (
+      {section === 'guided' && !mission ? (
+        <GuidedHome onStart={startMission} />
+      ) : section === 'quiz' ? (
         <QuizMode onResource={goToResource} />
       ) : section === 'flashcards' ? (
         <Flashcards onResource={goToResource} />
@@ -924,12 +998,28 @@ export default function App() {
           )}
         </div>
         <aside className="side">
-          <DetailsPanel device={selectedDevice} net={net} onToggleIcmp={toggleIcmp} />
+          <DetailsPanel device={selectedDevice} net={net} onToggleIcmp={toggleIcmp} onConfig={configureDevice} />
           <EventLog log={log} onClear={() => setLog([])} />
         </aside>
       </div>
       )}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+      {mission &&
+        (() => {
+          const mis = missionById(mission.id);
+          if (!mis) return null;
+          return (
+            <GuidedOverlay
+              mission={mis}
+              stepIndex={mission.step}
+              ctx={missionCtx}
+              api={missionApi}
+              onNext={nextStep}
+              onBack={backStep}
+              onExit={exitMission}
+            />
+          );
+        })()}
     </div>
   );
 }
