@@ -706,6 +706,59 @@ export const MISSIONS: Mission[] = [
       },
     ],
   },
+  {
+    id: 'tls-handshake',
+    title: 'TLS: how HTTPS gets encrypted',
+    subtitle: 'After TCP connects, TLS proves identity and sets up the encryption keys.',
+    domain: '4.0 Network Security',
+    category: 'Protocols',
+    level: 'Advanced',
+    minutes: 5,
+    diagram: {
+      actors: [{ name: 'Client' }, { name: 'Server' }],
+      messages: [
+        { from: 0, to: 1, label: 'ClientHello', sub: 'TLS versions + cipher suites', color: FLY_BLUE },
+        { from: 1, to: 0, label: 'ServerHello', sub: 'chosen cipher', color: FLY_GREEN },
+        { from: 1, to: 0, label: 'Certificate', sub: 'public key, signed by a CA', color: FLY_GREEN },
+        { from: 0, to: 1, label: 'Key exchange', sub: 'agree on a shared secret', color: FLY_BLUE },
+        { from: 0, to: 1, label: 'Finished', sub: 'encrypted from here on', color: FLY_GREEN },
+        { from: 1, to: 0, label: 'Finished', sub: 'secure channel is up', color: FLY_GREEN },
+      ],
+    },
+    steps: [
+      {
+        title: 'TCP connects, TLS secures',
+        body: `The TCP handshake opened a connection, but anyone on the path could read it. TLS is the layer that turns plain HTTP into HTTPS: it proves who the server is and sets up encryption keys, all before the first real byte of web data.`,
+        reveal: 0,
+        setup: (api) => api.reset([], []),
+      },
+      {
+        title: 'Hello, here is what I support',
+        body: `The client sends a ClientHello listing the TLS versions and cipher suites it can use. The server replies with ServerHello, picking the strongest options both sides share.`,
+        reveal: 2,
+      },
+      {
+        title: 'Prove who you are',
+        body: `The server sends its certificate, which contains its public key and is signed by a Certificate Authority (CA) the client already trusts. This is what stops an imposter: a fake server cannot produce a valid CA signature for that name.`,
+        reveal: 3,
+      },
+      {
+        title: 'Agree on a secret',
+        body: `Using the server's public key (or modern Diffie-Hellman), both sides agree on a shared session key that no eavesdropper can derive. Public-key crypto sets it up; fast symmetric crypto does the bulk work.`,
+        reveal: 4,
+      },
+      {
+        title: 'Switch to encrypted',
+        body: `Both sides send Finished and from this point everything is encrypted with the shared key. That is the padlock in your browser. HTTPS is just HTTP running inside this TLS tunnel on port 443.`,
+        reveal: 6,
+      },
+      {
+        title: 'What the exam wants',
+        body: `TLS replaced the older, broken SSL (never use SSL). TLS 1.3 trimmed the handshake to one round trip, so it is faster. The same TLS wraps other protocols into their secure twins: FTPS, SMTPS, LDAPS. Encryption hides the data; the certificate proves identity. You need both.`,
+        reveal: 6,
+      },
+    ],
+  },
 ];
 
 export const missionById = (id: string): Mission | undefined => MISSIONS.find((m) => m.id === id);
