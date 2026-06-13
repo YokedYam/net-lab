@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
-  Addr,
   Device,
   DeviceConfig,
   DeviceType,
@@ -17,6 +16,7 @@ import {
   DEVICE_COLOR,
   DEVICE_LABEL,
   computeNetworks,
+  effectiveAddr,
   findPath,
   ipToInt,
   isHost,
@@ -124,9 +124,16 @@ const WELCOME: LogEntry[] = [
   { id: uid(), kind: 'info', text: 'Scroll to zoom, drag the background to pan. Help has the full tour.' },
 ];
 
-function ipLabel(d: Device, addrs: Addr[] | undefined): string {
+function ipLabel(d: Device, net: NetInfo): string {
   if (d.type === 'switch') return 'L2 · no IP';
   if (d.type === 'firewall') return d.blockIcmp ? 'ICMP blocked' : 'ICMP allowed';
+  // A hand-configured host shows what you typed, not the auto address.
+  if (isHost(d.type) && d.ipMode === 'static') {
+    const eff = effectiveAddr(d, net);
+    if (!eff || eff.invalid || !eff.ip) return 'static · set IP';
+    return eff.ip;
+  }
+  const addrs = net.addrs.get(d.id);
   if (!addrs || addrs.length === 0) return 'no network';
   if (d.type === 'router' && addrs.length > 1) return `${addrs[0].ip} +${addrs.length - 1}`;
   return addrs[0].ip;
@@ -913,7 +920,7 @@ export default function App() {
                 <DeviceNode
                   key={d.id}
                   d={d}
-                  label={ipLabel(d, net.addrs.get(d.id))}
+                  label={ipLabel(d, net)}
                   selected={selectedId === d.id}
                   pending={pendingId === d.id}
                   highlighted={demoHighlight?.has(d.id) ?? false}
