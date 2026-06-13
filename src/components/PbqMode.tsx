@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PBQS } from '../pbqData';
-import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq } from '../pbqData';
+import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { SubnetField } from '../study';
 import { conceptById } from '../concepts';
@@ -25,7 +25,17 @@ const KIND_LABEL: Record<Pbq['kind'], string> = {
   categorize: 'Drag-sort',
   subnet: 'Subnet calc',
   order: 'Sequencing',
+  recall: 'Type recall',
+  teachback: 'Teach-back',
 };
+
+// Normalize a typed answer for forgiving comparison.
+const normAns = (s: string): string =>
+  s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9+/, ]/g, '')
+    .replace(/\s+/g, ' ');
 
 const SUBNET_LABEL: Record<SubnetField, string> = {
   mask: 'Subnet mask',
@@ -154,6 +164,8 @@ function PbqRunner({ pbq, onBack, onResource, onGenerate, genBusy, genErr }: { p
         {pbq.kind === 'categorize' && <CategorizeBody pbq={pbq} grade={grade} setGrade={setGrade} />}
         {pbq.kind === 'subnet' && <SubnetBody pbq={pbq} grade={grade} setGrade={setGrade} />}
         {pbq.kind === 'order' && <OrderBody pbq={pbq} grade={grade} setGrade={setGrade} />}
+        {pbq.kind === 'recall' && <RecallBody pbq={pbq} grade={grade} setGrade={setGrade} />}
+        {pbq.kind === 'teachback' && <TeachbackBody pbq={pbq} grade={grade} setGrade={setGrade} />}
       </div>
 
       {grade && <Results grade={grade} pbq={pbq} onResource={onResource} onRetry={() => setGrade(null)} onGenerate={onGenerate} genBusy={genBusy} genErr={genErr} />}
@@ -368,6 +380,88 @@ function OrderBody({ pbq, grade, setGrade }: { pbq: OrderPbq; grade: Grade | nul
   );
 }
 
+// ---------- Recall (type the answer) ----------
+function RecallBody({ pbq, grade, setGrade }: { pbq: RecallPbq; grade: Grade | null; setGrade: (g: Grade) => void }) {
+  const [ans, setAns] = useState<Record<string, string>>({});
+  const locked = grade !== null;
+  const isOk = (p: RecallPbq['prompts'][number], your: string) =>
+    !!your.trim() && p.accept.some((a) => normAns(a) === normAns(your));
+
+  const submit = () => {
+    const parts: Part[] = pbq.prompts.map((p) => {
+      const your = ans[p.id] ?? '';
+      return { label: p.text, your: your || '(blank)', correct: p.accept[0], ok: isOk(p, your), why: p.why };
+    });
+    const correct = parts.filter((p) => p.ok).length;
+    setGrade({ total: parts.length, correct, parts, insight: recallInsight(parts) });
+  };
+
+  return (
+    <>
+      <div className="match-rows">
+        {pbq.prompts.map((p) => {
+          const v = ans[p.id] ?? '';
+          const state = locked ? (isOk(p, v) ? ' ok' : ' bad') : '';
+          return (
+            <div className={`match-row${state}`} key={p.id}>
+              <span className="match-prompt">{p.text}</span>
+              <input
+                className="recall-input"
+                value={v}
+                disabled={locked}
+                placeholder="type from memory"
+                spellCheck={false}
+                autoComplete="off"
+                onChange={(e) => setAns((a) => ({ ...a, [p.id]: e.target.value }))}
+              />
+            </div>
+          );
+        })}
+      </div>
+      {!locked && <SubmitBar onSubmit={submit} disabled={pbq.prompts.some((p) => !(ans[p.id] ?? '').trim())} />}
+    </>
+  );
+}
+
+// ---------- Teach-back (say it out loud / write it) ----------
+function TeachbackBody({ pbq, grade, setGrade }: { pbq: TeachbackPbq; grade: Grade | null; setGrade: (g: Grade) => void }) {
+  const [text, setText] = useState('');
+  const locked = grade !== null;
+
+  const submit = () => {
+    const t = text.toLowerCase();
+    const parts: Part[] = pbq.points.map((pt) => {
+      const hit = pt.keywords.some((k) => t.includes(k.toLowerCase()));
+      return { label: pt.text, your: hit ? 'covered' : 'not mentioned', correct: pt.keywords[0], ok: hit };
+    });
+    const correct = parts.filter((p) => p.ok).length;
+    setGrade({ total: parts.length, correct, parts, insight: teachbackInsight(correct, parts.length) });
+  };
+
+  return (
+    <>
+      <textarea
+        className="teachback-input"
+        value={text}
+        disabled={locked}
+        rows={6}
+        placeholder="Explain it in your own words, like you are teaching someone with no notes. Type what you would say out loud."
+        onChange={(e) => setText(e.target.value)}
+      />
+      {!locked && <SubmitBar onSubmit={submit} disabled={text.trim().length < 20} />}
+      {locked && (
+        <div className="teachback-model">
+          <span className="tb-model-label">Model answer</span>
+          <p>{pbq.model}</p>
+          <p className="tb-selfcheck">
+            Be honest: could you have said that out loud with no notes? If you stalled, that is the gap to close.
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
+
 function SubmitBar({ onSubmit, disabled }: { onSubmit: () => void; disabled: boolean }) {
   return (
     <div className="pbq-submit">
@@ -382,6 +476,8 @@ function SubmitBar({ onSubmit, disabled }: { onSubmit: () => void; disabled: boo
 function Results({ grade, pbq, onResource, onRetry, onGenerate, genBusy, genErr }: { grade: Grade; pbq: Pbq; onResource: (c: string) => void; onRetry: () => void; onGenerate: () => void; genBusy: boolean; genErr: string }) {
   const pct = Math.round((grade.correct / grade.total) * 100);
   const perfect = grade.correct === grade.total;
+  // The AI "generate similar" path only knows the original four kinds.
+  const canGenerate = pbq.kind === 'match' || pbq.kind === 'categorize' || pbq.kind === 'subnet' || pbq.kind === 'order';
   const resources = (pbq.resources ?? []).map((id) => conceptById(id)).filter((c): c is NonNullable<typeof c> => !!c);
   return (
     <div className="pbq-results">
@@ -434,11 +530,13 @@ function Results({ grade, pbq, onResource, onRetry, onGenerate, genBusy, genErr 
         <button className="big-btn" onClick={onRetry}>
           Try again
         </button>
-        <button className="big-btn ghost" onClick={onGenerate} disabled={genBusy}>
-          {genBusy ? 'Writing a PBQ…' : 'Generate a similar PBQ'}
-        </button>
+        {canGenerate && (
+          <button className="big-btn ghost" onClick={onGenerate} disabled={genBusy}>
+            {genBusy ? 'Writing a PBQ…' : 'Generate a similar PBQ'}
+          </button>
+        )}
       </div>
-      {genErr && <p className="gen-err">{genErr}</p>}
+      {canGenerate && genErr && <p className="gen-err">{genErr}</p>}
     </div>
   );
 }
@@ -447,6 +545,19 @@ function Results({ grade, pbq, onResource, onRetry, onGenerate, genBusy, genErr 
 
 function missedLabels(parts: Part[]): string[] {
   return parts.filter((p) => !p.ok).map((p) => p.label);
+}
+
+function recallInsight(parts: Part[]): string {
+  const missed = parts.filter((p) => !p.ok).length;
+  if (missed === 0)
+    return 'You produced every answer from memory. That is the recall the exam demands, not just recognition. This is the drill that actually moves the needle.';
+  return `You produced ${parts.length - missed} of ${parts.length} cold. The ones you blanked on are exactly what to hammer until they are automatic. Recognition is not recall: come back and type them again with no hints.`;
+}
+
+function teachbackInsight(correct: number, total: number): string {
+  if (correct === total)
+    return `You hit all ${total} key points. Now read the model answer: if you can say yours out loud just as smoothly with no notes, you own this concept.`;
+  return `You covered ${correct} of ${total} key points. Read the model answer, find what you skipped, then look away and say the whole thing out loud again. The stall is the gap.`;
 }
 
 function matchInsight(pbq: MatchPbq, parts: Part[]): string {

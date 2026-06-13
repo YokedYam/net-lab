@@ -39,7 +39,23 @@ export interface OrderPbq extends PbqBase {
   items: { id: string; text: string }[]; // stored in CORRECT order
 }
 
-export type Pbq = MatchPbq | CategorizePbq | SubnetPbq | OrderPbq;
+// Type the answer from memory (no options to recognize). Graded by normalized
+// match against any accepted form.
+export interface RecallPbq extends PbqBase {
+  kind: 'recall';
+  prompts: { id: string; text: string; accept: string[]; why: string }[];
+}
+
+// Say-it-out-loud / teach-back: write a free-text explanation. Graded on whether
+// each key point is covered (keyword check), then a model answer is revealed for
+// self-comparison.
+export interface TeachbackPbq extends PbqBase {
+  kind: 'teachback';
+  points: { id: string; text: string; keywords: string[] }[];
+  model: string;
+}
+
+export type Pbq = MatchPbq | CategorizePbq | SubnetPbq | OrderPbq | RecallPbq | TeachbackPbq;
 
 export const PBQS: Pbq[] = [
   {
@@ -212,5 +228,163 @@ export const PBQS: Pbq[] = [
       { id: 'd3', text: 'Request: client requests the offered address' },
       { id: 'd4', text: 'Acknowledge: server confirms the lease' },
     ],
+  },
+
+  // ----- Domain 2.0: Network Implementation -----
+  {
+    id: 'pbq-wifi',
+    kind: 'match',
+    title: 'Match the 802.11 standard to its band',
+    domain: '2.0',
+    scenario: 'You are planning a wireless upgrade and need to know which band each Wi-Fi standard uses.',
+    instruction: 'Pick the band each 802.11 standard operates on.',
+    resources: [],
+    options: ['2.4 GHz', '5 GHz', '2.4 and 5 GHz', '2.4, 5, and 6 GHz'],
+    prompts: [
+      { id: 'a', text: '802.11a', correct: '5 GHz', why: '802.11a was 5 GHz only.' },
+      { id: 'bg', text: '802.11b / 802.11g', correct: '2.4 GHz', why: 'b and g run on 2.4 GHz.' },
+      { id: 'n', text: '802.11n (Wi-Fi 4)', correct: '2.4 and 5 GHz', why: 'n added MIMO and works on both bands.' },
+      { id: 'ac', text: '802.11ac (Wi-Fi 5)', correct: '5 GHz', why: 'ac is 5 GHz only.' },
+      { id: 'ax', text: '802.11ax (Wi-Fi 6 / 6E)', correct: '2.4, 5, and 6 GHz', why: 'Wi-Fi 6E added the 6 GHz band.' },
+    ],
+  },
+  {
+    id: 'pbq-cabling',
+    kind: 'categorize',
+    title: 'Copper or fiber?',
+    domain: '2.0',
+    scenario: 'You are speccing cable runs. Sort each item into copper or fiber.',
+    instruction: 'Drag each item into Copper or Fiber.',
+    resources: [],
+    buckets: ['Copper', 'Fiber'],
+    items: [
+      { id: 'cat6', text: 'Cat 6 / Cat 6a cable', bucket: 'Copper', why: 'Cat5e/6/6a are twisted-pair copper.' },
+      { id: 'rj45', text: 'RJ45 connector', bucket: 'Copper', why: 'RJ45 terminates copper Ethernet.' },
+      { id: 'smf', text: 'Single-mode, long-haul runs', bucket: 'Fiber', why: 'Single-mode fiber carries light for kilometers.' },
+      { id: 'lc', text: 'LC / SC connector', bucket: 'Fiber', why: 'LC and SC are fiber connectors.' },
+      { id: '100m', text: '100 meter maximum length', bucket: 'Copper', why: 'Copper Ethernet tops out at 100 m.' },
+      { id: 'emi', text: 'Immune to EMI, very long distance', bucket: 'Fiber', why: 'Fiber is glass: no electrical interference, long runs.' },
+    ],
+  },
+
+  // ----- Domain 3.0: Network Operations -----
+  {
+    id: 'pbq-monitoring',
+    kind: 'match',
+    title: 'Match the monitoring tool to its job',
+    domain: '3.0',
+    scenario: 'You are building visibility into the network. Match each tool to what it is best at.',
+    instruction: 'Pick the right tool for each job.',
+    resources: [],
+    options: ['SNMP', 'Syslog', 'NetFlow', 'Packet capture'],
+    prompts: [
+      { id: 'metrics', text: 'Poll devices for metrics (CPU, interface counters)', correct: 'SNMP', why: 'SNMP polls device stats on UDP 161/162.' },
+      { id: 'logs', text: 'Collect event and log messages from many devices centrally', correct: 'Syslog', why: 'Syslog aggregates logs to one server.' },
+      { id: 'flows', text: 'Summarize who talked to whom and how much', correct: 'NetFlow', why: 'NetFlow/sFlow report traffic flow statistics.' },
+      { id: 'bytes', text: 'Inspect the actual bytes on the wire', correct: 'Packet capture', why: 'Wireshark/tcpdump capture real packets.' },
+    ],
+  },
+
+  // ----- Domain 4.0: Network Security -----
+  {
+    id: 'pbq-secure-twins',
+    kind: 'match',
+    title: 'Replace each plaintext protocol with its secure twin',
+    domain: '4.0',
+    scenario: 'A security audit flags several plaintext protocols. Choose the encrypted replacement for each.',
+    instruction: 'Pick the secure replacement for each insecure protocol.',
+    resources: ['tls', 'ports'],
+    options: ['SSH', 'SFTP', 'HTTPS', 'LDAPS', 'SNMPv3'],
+    prompts: [
+      { id: 'telnet', text: 'Telnet (plaintext remote login, port 23)', correct: 'SSH', why: 'SSH on 22 replaces Telnet.' },
+      { id: 'ftp', text: 'FTP (plaintext file transfer, port 21)', correct: 'SFTP', why: 'SFTP (over SSH, 22) replaces FTP.' },
+      { id: 'http', text: 'HTTP (plaintext web, port 80)', correct: 'HTTPS', why: 'HTTPS on 443 is HTTP over TLS.' },
+      { id: 'ldap', text: 'LDAP (plaintext directory, port 389)', correct: 'LDAPS', why: 'LDAPS on 636 encrypts LDAP.' },
+      { id: 'snmp', text: 'SNMP v1/v2 (plaintext management)', correct: 'SNMPv3', why: 'SNMPv3 adds authentication and encryption.' },
+    ],
+  },
+  {
+    id: 'pbq-cia-teachback',
+    kind: 'teachback',
+    title: 'Teach back: the CIA triad',
+    domain: '4.0',
+    scenario: 'A new hire asks what "CIA" means in security. Explain the triad in your own words, as if teaching them out loud.',
+    instruction: 'Write your explanation. Hit all three goals and what protects each.',
+    resources: [],
+    points: [
+      { id: 'c', text: 'Confidentiality: only authorized people can read the data (encryption, access control)', keywords: ['confidential', 'encrypt', 'authorized', 'access control', 'secret', 'only those'] },
+      { id: 'i', text: 'Integrity: the data has not been altered (hashing, checksums, signatures)', keywords: ['integrity', 'alter', 'tamper', 'hash', 'checksum', 'unchanged', 'modif', 'signature'] },
+      { id: 'a', text: 'Availability: the service is up and reachable when needed (redundancy, backups, DDoS defense)', keywords: ['availab', 'uptime', 'redundan', 'backup', 'reachable', 'up when', 'ddos'] },
+    ],
+    model:
+      'The CIA triad is the three goals of security. Confidentiality keeps data secret so only authorized people can read it, using encryption and access controls. Integrity makes sure data has not been tampered with, which hashes and digital signatures prove. Availability keeps the system up and reachable when it is needed, using redundancy, backups, and defenses against attacks like DDoS. Almost every control you add supports one of these three.',
+  },
+
+  // ----- Domain 5.0: Network Troubleshooting -----
+  {
+    id: 'pbq-cli-tools',
+    kind: 'match',
+    title: 'Match the command-line tool to what it proves',
+    domain: '5.0',
+    scenario: 'A user cannot reach a server. Match each CLI tool to the question it answers.',
+    instruction: 'Pick the tool that answers each question.',
+    resources: [],
+    options: ['ping', 'traceroute', 'nslookup', 'ipconfig', 'arp', 'netstat'],
+    prompts: [
+      { id: 'reach', text: 'Is the host reachable, and how fast?', correct: 'ping', why: 'ping is ICMP reachability and latency.' },
+      { id: 'path', text: 'Where along the path does it break?', correct: 'traceroute', why: 'traceroute shows each hop to the target.' },
+      { id: 'name', text: 'Is name resolution (DNS) working?', correct: 'nslookup', why: 'nslookup/dig query DNS directly.' },
+      { id: 'local', text: 'What is my IP, mask, and gateway (is it APIPA)?', correct: 'ipconfig', why: 'ipconfig/ip show local config and catch a 169.254 address.' },
+      { id: 'mac', text: 'Which MAC is mapped to this IP?', correct: 'arp', why: 'arp -a shows the IP-to-MAC table.' },
+      { id: 'ports', text: 'What ports are open or listening here?', correct: 'netstat', why: 'netstat/ss list active connections and listening ports.' },
+    ],
+  },
+  {
+    id: 'pbq-ports-recall',
+    kind: 'recall',
+    title: 'Recall the port numbers (type them)',
+    domain: '1.0',
+    scenario: 'No multiple choice this time. Type the port from memory, the way the exam makes you produce it.',
+    instruction: 'Type the correct port number for each protocol.',
+    resources: ['ports'],
+    prompts: [
+      { id: 'ssh', text: 'SSH uses TCP port…', accept: ['22'], why: 'SSH is TCP 22.' },
+      { id: 'https', text: 'HTTPS uses TCP port…', accept: ['443'], why: 'HTTPS is TCP 443.' },
+      { id: 'dns', text: 'DNS uses port…', accept: ['53'], why: 'DNS is port 53 (UDP and TCP).' },
+      { id: 'rdp', text: 'RDP uses TCP port…', accept: ['3389'], why: 'RDP is TCP 3389.' },
+      { id: 'smtp', text: 'SMTP uses TCP port…', accept: ['25'], why: 'SMTP is TCP 25.' },
+      { id: 'dhcp', text: 'DHCP uses UDP ports… (both)', accept: ['67/68', '68/67', '67 68', '67,68', '67 and 68'], why: 'DHCP is UDP 67 (server) and 68 (client).' },
+    ],
+  },
+  {
+    id: 'pbq-tshoot-recall',
+    kind: 'recall',
+    title: 'Recall the troubleshooting facts (type them)',
+    domain: '5.0',
+    scenario: 'Produce these from memory. They are the most common "what is wrong" answers on the exam.',
+    instruction: 'Type the answer for each.',
+    resources: [],
+    prompts: [
+      { id: 'loop', text: 'You ping ___ to test your own TCP/IP stack (the loopback).', accept: ['127.0.0.1', 'loopback', 'localhost'], why: 'Loopback is 127.0.0.1.' },
+      { id: 'apipa', text: 'A 169.254.x.x address means ___ failed.', accept: ['dhcp', 'apipa', 'dhcp server', 'the dhcp server'], why: '169.254 is APIPA: the DHCP server never answered.' },
+      { id: 'dns', text: 'IP addresses work but names do not. The problem is ___.', accept: ['dns'], why: 'Names fail, IPs work, points to DNS.' },
+      { id: 'trace', text: 'The command that shows every hop to a destination is ___.', accept: ['traceroute', 'tracert'], why: 'traceroute (tracert on Windows).' },
+    ],
+  },
+  {
+    id: 'pbq-osi-teachback',
+    kind: 'teachback',
+    title: 'Teach back: how data moves through OSI',
+    domain: '1.0',
+    scenario: 'Explain encapsulation, how data travels through the OSI layers, in your own words, like teaching a beginner.',
+    instruction: 'Write it out. Cover the direction, the headers each layer adds, and the receiving side.',
+    resources: ['ip', 'mac', 'tcp'],
+    points: [
+      { id: 'down', text: 'On the sender, data starts at the top (Application) and moves DOWN the stack', keywords: ['down', 'top', 'application', 'sender', 'descend'] },
+      { id: 'headers', text: 'Each layer adds its own header (encapsulation): Transport adds ports, Network adds IPs, Data Link adds MACs', keywords: ['header', 'encapsulat', 'port', 'ip address', 'mac', 'wrap', 'adds'] },
+      { id: 'up', text: 'It crosses as bits, then moves UP the stack on the receiver, stripping headers (de-encapsulation)', keywords: ['up', 'receiver', 'strip', 'de-encapsulat', 'bits', 'unwrap', 'remove'] },
+    ],
+    model:
+      'Picture the OSI model as a stack of seven layers. When you send data it starts at the top (Application) and moves down. Each layer wraps it with its own header: Transport adds port numbers, Network adds source and destination IP addresses, Data Link adds MAC addresses, and Physical turns it all into bits on the wire. That wrapping is called encapsulation. On the receiving side the data moves back up the stack and each layer peels off its header until the application reads the original message. A mnemonic for the layers is "Please Do Not Throw Sausage Pizza Away": Physical, Data Link, Network, Transport, Session, Presentation, Application.',
   },
 ];
