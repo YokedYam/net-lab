@@ -2254,3 +2254,77 @@ svg.scene text {
   transform: translateX(-50%);
   animation: coachin 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
+
+/* ---- protocol sequence-diagram stage (bright, not dimmed) ---- */
+.coach-stage {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(900px, 94vw);
+  height: min(56vh, 520px);
+  background: linear-gradient(180deg, #0f1a2e, #0b1322);
+  border: 1px solid #2a3a5e;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  padding: 14px 18px;
+  pointer-events: auto;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: coachin 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.seqdiag {
+  width: 100%;
+  height: 100%;
+}
+
+.seq-life {
+  stroke: #2c3c63;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 6;
+}
+
+.seq-actor {
+  fill: #c7d2fe;
+  stroke: #a5b4fc;
+  stroke-width: 1;
+}
+
+.seq-actor-t {
+  fill: #1e1b4b;
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.seq-arrow {
+  stroke-width: 2.2;
+}
+
+.seq-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+.seq-sub {
+  fill: #8b9cbd;
+  font-size: 10.5px;
+  text-anchor: middle;
+}
+
+.seq-msg.latest {
+  animation: seqpop 0.45s ease;
+}
+
+@keyframes seqpop {
+  from {
+    opacity: 0;
+    transform: translateY(-7px);
+  }
+}

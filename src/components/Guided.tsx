@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Mission, MissionApi, MissionCtx } from '../missions';
 import { MISSIONS } from '../missions';
+import { SequenceDiagram } from './SequenceDiagram';
 
 const DONE_KEY = 'netlab.missions.done';
 
@@ -183,6 +184,7 @@ export function GuidedOverlay({
     : null;
 
   const isTeach = !step.check;
+  const dia = mission.diagram;
   const lastStep = stepIndex === total - 1;
   const pct = Math.round(((stepIndex + (passed ? 1 : 0)) / total) * 100);
 
@@ -231,7 +233,14 @@ export function GuidedOverlay({
 
   return (
     <div className="coach-root">
-      {hole ? (
+      {dia ? (
+        <>
+          <div className="coach-soft" />
+          <div className="coach-stage">
+            <SequenceDiagram actors={dia.actors} messages={dia.messages} visible={step.reveal ?? 0} />
+          </div>
+        </>
+      ) : hole ? (
         <div
           className={passed ? 'coach-hole pass' : 'coach-hole'}
           style={{ top: hole.top, left: hole.left, width: hole.width, height: hole.height }}
@@ -243,13 +252,13 @@ export function GuidedOverlay({
       )}
 
       {isTeach ? (
-        <div className={step.place === 'bottom' ? 'coach-lesson dock-bottom' : 'coach-lesson'}>
+        <div className={dia || step.place === 'bottom' ? 'coach-lesson dock-bottom' : 'coach-lesson'}>
           <div className="coach-eyebrow-row">
             <span className="coach-eyebrow">{mission.title}</span>
             {stepN}
           </div>
           {Bar}
-          <div className="coach-emoji">{lastStep ? '🎉' : '👋'}</div>
+          {!dia && <div className="coach-emoji">{lastStep ? '🎉' : '👋'}</div>}
           <h3 className="coach-h">{step.title}</h3>
           <p className="coach-p">{step.body}</p>
           <div className="coach-foot">

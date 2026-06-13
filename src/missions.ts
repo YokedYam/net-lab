@@ -1,5 +1,6 @@
 import type { Device, Link, NetInfo, Tool } from './model';
 import { effectiveAddr, findPath, ipToInt, planPing, randMac, uid } from './model';
+import type { SeqActor, SeqMessage } from './components/SequenceDiagram';
 
 // A guided mission is a sequence of steps played over the real Visual Lab
 // canvas. The overlay dims the screen, spotlights one control at a time, and
@@ -51,6 +52,8 @@ export interface MissionStep {
   // Teach cards center by default; 'bottom' docks them low so a canvas
   // animation stays visible above the card.
   place?: 'center' | 'bottom';
+  // For sequence-diagram missions: how many messages are revealed at this step.
+  reveal?: number;
 }
 
 export interface Mission {
@@ -62,6 +65,9 @@ export interface Mission {
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   minutes: number;
   steps: MissionStep[];
+  // Present for protocol missions: renders a bright sequence diagram instead of
+  // the build canvas, and each step's `reveal` controls how much is shown.
+  diagram?: { actors: SeqActor[]; messages: SeqMessage[] };
 }
 
 // ---------- check helpers ----------
@@ -122,21 +128,7 @@ function staticSeed(): { devices: Device[]; links: Link[] } {
   };
 }
 
-// A client and a web server across a switch, spread wide so packet animations
-// have room to travel: the stage for the TCP handshake mission.
-function tcpSeed(): { devices: Device[]; links: Link[] } {
-  const client = dev('laptop', 'Client', 220, 300);
-  const sw = dev('switch', 'Switch-1', 600, 300);
-  const server = dev('server', 'Web-Server', 980, 300);
-  return {
-    devices: [client, sw, server],
-    links: [
-      { id: uid(), a: client.id, b: sw.id },
-      { id: uid(), a: sw.id, b: server.id },
-    ],
-  };
-}
-
+// Sequence-diagram arrow colors.
 const FLY_BLUE = '#60a5fa';
 const FLY_GREEN = '#34d399';
 const FLY_ORANGE = '#fb923c';
@@ -497,6 +489,59 @@ export const MISSIONS: Mission[] = [
     ],
   },
   {
+    id: 'ports-protocols',
+    title: 'Ports and protocols',
+    subtitle: 'The IP finds the host; the port finds the service. Learn the doors that matter.',
+    domain: '1.0 Networking Concepts',
+    category: 'Protocols',
+    level: 'Intermediate',
+    minutes: 6,
+    diagram: {
+      actors: [{ name: 'Client' }, { name: 'Server' }],
+      messages: [
+        { from: 0, to: 1, label: 'SSH  :22', sub: 'remote shell · TCP · encrypted', color: FLY_GREEN },
+        { from: 0, to: 1, label: 'DNS  :53', sub: 'name lookup · TCP + UDP', color: FLY_BLUE },
+        { from: 0, to: 1, label: 'HTTP  :80', sub: 'web · TCP · plaintext', color: FLY_ORANGE },
+        { from: 0, to: 1, label: 'HTTPS  :443', sub: 'web · TCP · encrypted', color: FLY_GREEN },
+        { from: 0, to: 1, label: 'SMTP  :25', sub: 'send mail · TCP', color: FLY_BLUE },
+        { from: 0, to: 1, label: 'RDP  :3389', sub: 'remote desktop · TCP', color: FLY_BLUE },
+      ],
+    },
+    steps: [
+      {
+        title: 'A port is a numbered door',
+        body: `Every server runs many services at once. The IP address gets you to the right machine; the port number gets you to the right service on it, like an apartment number after the street address. Ports run from 0 to 65535.`,
+        reveal: 0,
+        setup: (api) => api.reset([], []),
+      },
+      {
+        title: 'Remote access and names',
+        body: `SSH on port 22 is your encrypted remote shell into a box. DNS on port 53 turns a name like example.com into an IP, and it's the oddball that uses BOTH TCP and UDP: UDP for quick lookups, TCP for large zone transfers.`,
+        reveal: 2,
+      },
+      {
+        title: 'The web pair',
+        body: `HTTP on port 80 is web traffic in plaintext. HTTPS on port 443 is the same thing wrapped in TLS encryption. If a question stresses "secure," 443 beats 80 almost every time.`,
+        reveal: 4,
+      },
+      {
+        title: 'Mail and remote desktop',
+        body: `SMTP on port 25 carries email between servers. RDP on port 3389 is Windows Remote Desktop. Memorize the number-to-service pairs cold: the exam tests them directly and inside scenarios.`,
+        reveal: 6,
+      },
+      {
+        title: 'Secure vs insecure twins',
+        body: `A favorite exam move is pairing a plaintext protocol with its encrypted replacement. Telnet :23 becomes SSH :22. FTP :20/21 becomes SFTP :22 or FTPS :990. HTTP :80 becomes HTTPS :443. LDAP :389 becomes LDAPS :636. When in doubt, pick the encrypted twin.`,
+        reveal: 6,
+      },
+      {
+        title: 'Well-known vs the rest',
+        body: `Ports 0 to 1023 are the well-known ports (everything above). 1024 to 49151 are registered, and 49152 to 65535 are dynamic or ephemeral: the temporary port your client grabs as its return address. That ephemeral port is the source port in the TCP handshake mission.`,
+        reveal: 6,
+      },
+    ],
+  },
+  {
     id: 'tcp-handshake',
     title: 'The TCP three-way handshake',
     subtitle: 'Watch a client and server open a reliable connection, then tear it down.',
@@ -504,62 +549,56 @@ export const MISSIONS: Mission[] = [
     category: 'Protocols',
     level: 'Advanced',
     minutes: 6,
+    diagram: {
+      actors: [{ name: 'Client' }, { name: 'Web Server' }],
+      messages: [
+        { from: 0, to: 1, label: 'SYN', sub: 'seq = x', color: FLY_BLUE },
+        { from: 1, to: 0, label: 'SYN, ACK', sub: 'seq = y, ack = x+1', color: FLY_GREEN },
+        { from: 0, to: 1, label: 'ACK', sub: 'ack = y+1', color: FLY_BLUE },
+        { from: 0, to: 1, label: 'HTTP GET', sub: 'port 443 (HTTPS)', color: FLY_BLUE },
+        { from: 1, to: 0, label: '200 OK', sub: 'data + ACK', color: FLY_GREEN },
+        { from: 0, to: 1, label: 'FIN', sub: 'I am done sending', color: FLY_ORANGE },
+        { from: 1, to: 0, label: 'ACK', color: FLY_GREEN },
+        { from: 1, to: 0, label: 'FIN', sub: 'me too', color: FLY_ORANGE },
+        { from: 0, to: 1, label: 'ACK', sub: 'connection closed', color: FLY_GREEN },
+      ],
+    },
     steps: [
       {
         title: 'Before any data, a handshake',
-        body: `TCP is the reliable delivery service behind web pages, email, and file transfers. Before sending a single byte, the two sides shake hands: three messages that agree to talk and sync their counters. Here's a client and a web server. Watch the canvas.`,
-        place: 'bottom',
-        setup: (api) => {
-          const s = tcpSeed();
-          api.reset(s.devices, s.links);
-          api.setTab('build');
-          api.setTool('select');
-          api.select(null);
-        },
+        body: `TCP is the reliable delivery service behind web pages, email, and file transfers. Before sending a single byte, the two sides shake hands: three messages that agree to talk and sync their counters. Read this diagram top to bottom, like a conversation unfolding over time.`,
+        reveal: 0,
+        setup: (api) => api.reset([], []),
       },
       {
         title: '1. SYN',
         body: `The client sends a SYN, short for synchronize: "I want to talk, and my starting sequence number is X." It's knocking on the door.`,
-        place: 'bottom',
-        setup: (api) => api.flight([{ from: 'Client', to: 'Web-Server', label: 'SYN', color: FLY_BLUE }]),
+        reveal: 1,
       },
       {
-        title: '2. SYN-ACK',
-        body: `The server answers with SYN-ACK: it acknowledges the client's request AND sends its own SYN ("I'm ready too, my number is Y"). One packet doing two jobs.`,
-        place: 'bottom',
-        setup: (api) => api.flight([{ from: 'Web-Server', to: 'Client', label: 'SYN-ACK', color: FLY_GREEN }]),
+        title: '2. SYN, ACK',
+        body: `The server answers with SYN-ACK, one packet doing two jobs: it acknowledges the client's request (ack = x+1) and sends its own SYN with sequence number Y.`,
+        reveal: 2,
       },
       {
         title: '3. ACK',
-        body: `The client fires back a final ACK to confirm it got the server's number. Three messages and you're done. The connection is open and trusted by both ends.`,
-        place: 'bottom',
-        setup: (api) => api.flight([{ from: 'Client', to: 'Web-Server', label: 'ACK', color: FLY_BLUE }]),
+        body: `The client sends a final ACK to confirm it got the server's number. Three messages, and the connection is open and trusted by both ends. That's the three-way handshake.`,
+        reveal: 3,
       },
       {
         title: 'Now the data flows',
-        body: `With the handshake complete, real data moves: the client sends its request (an HTTP GET) and the server streams back the reply. Every chunk gets acknowledged, so nothing goes missing silently. That reliability is why TCP carries the web.`,
-        place: 'bottom',
-        setup: (api) =>
-          api.flight([
-            { from: 'Client', to: 'Web-Server', label: 'HTTP GET', color: FLY_BLUE },
-            { from: 'Web-Server', to: 'Client', label: '200 OK', color: FLY_GREEN, delay: 1 },
-          ]),
+        body: `With the channel open, real data moves. Here the client sends an HTTP GET to port 443 (HTTPS) and the server streams back 200 OK. Every chunk gets acknowledged, so nothing is lost silently. That reliability is why TCP carries the web.`,
+        reveal: 5,
       },
       {
         title: 'The four-way goodbye',
-        body: `Closing takes four steps, not three. Each side sends a FIN ("I'm done sending") and gets an ACK back: client FIN, server ACK, server FIN, client ACK. That's why you'll hear "TCP setup is three-way, teardown is four-way."`,
-        place: 'bottom',
-        setup: (api) =>
-          api.flight([
-            { from: 'Client', to: 'Web-Server', label: 'FIN', color: FLY_ORANGE, delay: 0 },
-            { from: 'Web-Server', to: 'Client', label: 'ACK', color: FLY_GREEN, delay: 0.9 },
-            { from: 'Web-Server', to: 'Client', label: 'FIN', color: FLY_ORANGE, delay: 1.8 },
-            { from: 'Client', to: 'Web-Server', label: 'ACK', color: FLY_GREEN, delay: 2.7 },
-          ]),
+        body: `Closing takes four steps, not three. Each side sends its own FIN ("I'm done sending") and waits for an ACK back: client FIN, server ACK, server FIN, client ACK. That's the line to remember: setup is three-way, teardown is four-way.`,
+        reveal: 9,
       },
       {
         title: 'TCP vs UDP',
-        body: `All this setup is what makes TCP reliable and ordered, but it costs a little time. UDP skips the handshake entirely: no connection, no guarantees, just fire packets and hope. That's why live video and games lean on UDP, while web and email lean on TCP.`,
+        body: `All this setup is what makes TCP reliable and ordered, but it costs a little time. UDP skips the handshake entirely: no connection, no guarantees, just fire packets and hope. That's why live video, voice, and gaming lean on UDP, while web, email, and file transfer lean on TCP.`,
+        reveal: 9,
       },
     ],
   },
