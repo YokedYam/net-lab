@@ -542,6 +542,110 @@ export const MISSIONS: Mission[] = [
     ],
   },
   {
+    id: 'dhcp-dora',
+    title: 'DHCP: how a device gets an IP',
+    subtitle: 'The four-step DORA exchange that hands out addresses automatically.',
+    domain: '1.0 Networking Concepts',
+    category: 'Protocols',
+    level: 'Intermediate',
+    minutes: 5,
+    diagram: {
+      actors: [{ name: 'New Client' }, { name: 'DHCP Server' }],
+      messages: [
+        { from: 0, to: 1, label: 'DISCOVER', sub: 'broadcast: anyone out there?', color: FLY_ORANGE },
+        { from: 1, to: 0, label: 'OFFER', sub: 'how about 192.168.1.50?', color: FLY_GREEN },
+        { from: 0, to: 1, label: 'REQUEST', sub: 'yes, I will take it', color: FLY_BLUE },
+        { from: 1, to: 0, label: 'ACK', sub: 'it is yours, lease 24h', color: FLY_GREEN },
+      ],
+    },
+    steps: [
+      {
+        title: 'No IP yet? Ask DHCP',
+        body: `When a device joins a network it usually has no address at all. DHCP hands one out automatically in four steps. The memory hook is DORA: Discover, Offer, Request, Acknowledge.`,
+        reveal: 0,
+        setup: (api) => api.reset([], []),
+      },
+      {
+        title: 'D is for Discover',
+        body: `The client has no IP and no idea where the server is, so it shouts a broadcast: "Is there a DHCP server out there?" Everyone on the subnet hears it.`,
+        reveal: 1,
+      },
+      {
+        title: 'O is for Offer',
+        body: `Any DHCP server that hears the discover replies with an offer: a candidate address (here 192.168.1.50) plus the mask, gateway, DNS servers, and lease time.`,
+        reveal: 2,
+      },
+      {
+        title: 'R is for Request',
+        body: `The client formally requests that specific address. This step matters when two servers both offer: the client picks one and broadcasts its choice so the other server releases its reservation.`,
+        reveal: 3,
+      },
+      {
+        title: 'A is for Acknowledge',
+        body: `The server locks in the lease and sends an ACK. The client now owns that address for the lease duration and starts using it. DORA complete.`,
+        reveal: 4,
+      },
+      {
+        title: 'The details that get tested',
+        body: `DHCP uses UDP ports 67 (server) and 68 (client). The client tries to renew at 50 percent of the lease. And because Discover is a broadcast, and routers do not forward broadcasts, a device on a remote subnet needs a DHCP relay (an IP helper address) to reach the server.`,
+        reveal: 4,
+      },
+    ],
+  },
+  {
+    id: 'dns-resolution',
+    title: 'DNS: turning a name into an IP',
+    subtitle: 'Follow a lookup from your machine out to the authoritative server and back.',
+    domain: '1.0 Networking Concepts',
+    category: 'Protocols',
+    level: 'Intermediate',
+    minutes: 5,
+    diagram: {
+      actors: [{ name: 'Client' }, { name: 'Resolver' }, { name: 'Root / TLD' }, { name: 'Authoritative' }],
+      messages: [
+        { from: 0, to: 1, label: 'example.com?', sub: 'ask my resolver', color: FLY_BLUE },
+        { from: 1, to: 2, label: 'example.com?', sub: 'where does .com live?', color: FLY_BLUE },
+        { from: 2, to: 1, label: 'ask them', sub: 'name servers for the domain', color: FLY_ORANGE },
+        { from: 1, to: 3, label: 'example.com?', sub: 'the real question', color: FLY_BLUE },
+        { from: 3, to: 1, label: 'A 93.184.x.x', sub: 'the address', color: FLY_GREEN },
+        { from: 1, to: 0, label: 'A 93.184.x.x', sub: 'cached for the TTL', color: FLY_GREEN },
+      ],
+    },
+    steps: [
+      {
+        title: 'Names are for humans',
+        body: `People remember example.com; machines need 93.184.x.x. DNS is the phone book that converts one to the other. Your client almost never does the legwork itself: it hands the job to a resolver.`,
+        reveal: 0,
+        setup: (api) => api.reset([], []),
+      },
+      {
+        title: 'Ask the resolver',
+        body: `The client asks its configured resolver (often the router, or a public one like 8.8.8.8) for example.com. This first hop is a recursive query: "get me the final answer, I will wait."`,
+        reveal: 1,
+      },
+      {
+        title: 'Walk down the tree',
+        body: `If the resolver does not have it cached, it walks the hierarchy: it asks a root and TLD server who is responsible for the domain, and gets pointed at the right name servers. Those are iterative queries.`,
+        reveal: 3,
+      },
+      {
+        title: 'Hit the source',
+        body: `The resolver asks the authoritative server, the one that actually holds the records for example.com, and gets back the A record with the IP address.`,
+        reveal: 5,
+      },
+      {
+        title: 'Answer and cache',
+        body: `The resolver hands the address to your client and caches it for the record's TTL, so the next lookup is instant. DNS runs on port 53: UDP for these quick lookups, TCP for large zone transfers.`,
+        reveal: 6,
+      },
+      {
+        title: 'Record types to know',
+        body: `A maps a name to an IPv4 address, AAAA to IPv6. CNAME is an alias to another name. MX points to mail servers. NS lists name servers. PTR does the reverse lookup (IP back to name). TXT holds text such as SPF and verification records.`,
+        reveal: 6,
+      },
+    ],
+  },
+  {
     id: 'tcp-handshake',
     title: 'The TCP three-way handshake',
     subtitle: 'Watch a client and server open a reliable connection, then tear it down.',
