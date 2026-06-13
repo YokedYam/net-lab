@@ -111,6 +111,7 @@ export function GuidedOverlay({
   onNext,
   onBack,
   onExit,
+  onPractice,
 }: {
   mission: Mission;
   stepIndex: number;
@@ -119,6 +120,7 @@ export function GuidedOverlay({
   onNext: () => void;
   onBack: () => void;
   onExit: () => void;
+  onPractice?: (pbqId: string) => void;
 }) {
   const step = mission.steps[stepIndex];
   const total = mission.steps.length;
@@ -271,7 +273,18 @@ export function GuidedOverlay({
                   ◂ Back
                 </button>
               )}
-              <button className="btn small accent" onClick={onNext}>
+              {lastStep && mission.pbq && onPractice && (
+                <button
+                  className="btn small accent"
+                  onClick={() => {
+                    markDone(mission.id);
+                    onPractice(mission.pbq!);
+                  }}
+                >
+                  Practice it (PBQ) ▸
+                </button>
+              )}
+              <button className="btn small" onClick={onNext}>
                 {lastStep ? 'Finish 🎉' : 'Got it, show me ▸'}
               </button>
             </div>

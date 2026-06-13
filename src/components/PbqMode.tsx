@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PBQS } from '../pbqData';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
@@ -45,8 +45,19 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function PbqMode({ onResource }: { onResource: (conceptId: string) => void }) {
-  const [activeId, setActiveId] = useState<string | null>(null);
+export function PbqMode({
+  onResource,
+  openRequest,
+}: {
+  onResource: (conceptId: string) => void;
+  openRequest?: { id: string; n: number } | null;
+}) {
+  const [activeId, setActiveId] = useState<string | null>(openRequest?.id ?? null);
+  // A deep-link from a guided mission opens that exact PBQ. The nonce lets the
+  // same PBQ be re-opened on a repeat click.
+  useEffect(() => {
+    if (openRequest) setActiveId(openRequest.id);
+  }, [openRequest?.n]); // eslint-disable-line react-hooks/exhaustive-deps
   const [gen, setGen] = useState<Pbq | null>(null);
   const [genBusy, setGenBusy] = useState(false);
   const [genErr, setGenErr] = useState('');

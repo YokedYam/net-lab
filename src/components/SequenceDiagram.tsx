@@ -27,9 +27,9 @@ export function SequenceDiagram({
   const top = 16;
   const headerH = 40;
   const lifeTop = top + headerH + 10;
-  const rowH = 44;
-  const firstRow = lifeTop + 30;
-  const H = firstRow + Math.max(1, messages.length) * rowH;
+  const rowH = 64;
+  const firstRow = lifeTop + 36;
+  const H = firstRow + Math.max(1, messages.length) * rowH + 10;
 
   const n = Math.max(1, actors.length);
   const pad = 160;
@@ -54,7 +54,7 @@ export function SequenceDiagram({
         const x1 = xOf(m.from);
         const x2 = xOf(m.to);
         const dir = x2 >= x1 ? 1 : -1;
-        const ye = y + 15;
+        const ye = y + 13;
         const ah = 8;
         const xeLine = x2 - dir * ah;
         const color = m.color ?? '#93c5fd';
@@ -65,11 +65,11 @@ export function SequenceDiagram({
           <g key={i} className={latest ? 'seq-msg latest' : 'seq-msg'}>
             <line x1={x1} y1={y} x2={xeLine} y2={ye} stroke={color} className="seq-arrow" />
             <path d={head} fill={color} />
-            <text x={midx} y={y - 7} className="seq-label" fill={color}>
+            <text x={midx} y={y - 10} className="seq-label" fill={color}>
               {m.label}
             </text>
             {m.sub && (
-              <text x={midx} y={ye + 16} className="seq-sub">
+              <text x={midx} y={ye + 20} className="seq-sub">
                 {m.sub}
               </text>
             )}

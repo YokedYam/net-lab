@@ -68,6 +68,9 @@ export interface Mission {
   // Present for protocol missions: renders a bright sequence diagram instead of
   // the build canvas, and each step's `reveal` controls how much is shown.
   diagram?: { actors: SeqActor[]; messages: SeqMessage[] };
+  // Optional id of a PBQ that drills this same concept; surfaced as a
+  // "Practice this" link at the end of the mission.
+  pbq?: string;
 }
 
 // ---------- check helpers ----------
@@ -291,6 +294,7 @@ export const MISSIONS: Mission[] = [
   },
   {
     id: 'subnet-mask',
+    pbq: 'pbq-subnet-26',
     title: 'Reading the subnet mask',
     subtitle: 'See how the mask, not the cable, decides which devices share a subnet.',
     domain: '1.0 Networking Concepts',
@@ -490,6 +494,7 @@ export const MISSIONS: Mission[] = [
   },
   {
     id: 'ports-protocols',
+    pbq: 'pbq-ports',
     title: 'Ports and protocols',
     subtitle: 'The IP finds the host; the port finds the service. Learn the doors that matter.',
     domain: '1.0 Networking Concepts',
@@ -543,6 +548,7 @@ export const MISSIONS: Mission[] = [
   },
   {
     id: 'dhcp-dora',
+    pbq: 'pbq-dora',
     title: 'DHCP: how a device gets an IP',
     subtitle: 'The four-step DORA exchange that hands out addresses automatically.',
     domain: '1.0 Networking Concepts',
@@ -647,6 +653,7 @@ export const MISSIONS: Mission[] = [
   },
   {
     id: 'tcp-handshake',
+    pbq: 'pbq-tcp-handshake',
     title: 'The TCP three-way handshake',
     subtitle: 'Watch a client and server open a reliable connection, then tear it down.',
     domain: '1.0 Networking Concepts',

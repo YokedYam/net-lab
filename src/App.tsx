@@ -269,6 +269,7 @@ export default function App() {
   const [mission, setMission] = useState<{ id: string; step: number } | null>(null);
   const [pingCount, setPingCount] = useState(0);
   const [lastPingOk, setLastPingOk] = useState(false);
+  const [pbqReq, setPbqReq] = useState<{ id: string; n: number } | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -771,7 +772,16 @@ export default function App() {
     setMission({ id, step: 0 });
     setSection('lab');
   };
-  const exitMission = () => setMission(null);
+  const exitMission = () => {
+    setMission(null);
+    setSection('guided');
+  };
+  // Deep-link from a guided mission straight into the PBQ that drills it.
+  const openPbq = (id: string) => {
+    setPbqReq((r) => ({ id, n: (r?.n ?? 0) + 1 }));
+    setMission(null);
+    setSection('pbq');
+  };
   const nextStep = () => {
     if (!mission) return;
     const mis = missionById(mission.id);
@@ -855,7 +865,7 @@ export default function App() {
       ) : section === 'flashcards' ? (
         <Flashcards onResource={goToResource} />
       ) : section === 'pbq' ? (
-        <PbqMode onResource={goToResource} />
+        <PbqMode onResource={goToResource} openRequest={pbqReq} />
       ) : (
         <div className="main">
         <Toolbar
@@ -1047,6 +1057,7 @@ export default function App() {
               onNext={nextStep}
               onBack={backStep}
               onExit={exitMission}
+              onPractice={openPbq}
             />
           );
         })()}

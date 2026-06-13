@@ -180,6 +180,25 @@ export const PBQS: Pbq[] = [
     ],
   },
   {
+    id: 'pbq-tcp-handshake',
+    kind: 'order',
+    title: 'Build the TCP three-way handshake',
+    domain: '1.0',
+    scenario:
+      'A client opens a connection to a web server. Build the TCP three-way handshake that sets it up, then the graceful close.',
+    instruction: 'Drag the segments into the order they are sent (top = first).',
+    resources: ['tcp', 'ports'],
+    items: [
+      { id: 't1', text: 'SYN: client sends its starting sequence number (seq = x)' },
+      { id: 't2', text: 'SYN, ACK: server acknowledges (ack = x+1) and sends its own SYN (seq = y)' },
+      { id: 't3', text: 'ACK: client acknowledges the server (ack = y+1). Connection is open' },
+      { id: 't4', text: 'Data flows (for example HTTP GET, then 200 OK), each segment acknowledged' },
+      { id: 't5', text: 'FIN: a side signals it is done sending' },
+      { id: 't6', text: 'ACK + FIN: the other side acknowledges, then sends its own FIN' },
+      { id: 't7', text: 'ACK: final acknowledge. Connection fully closed' },
+    ],
+  },
+  {
     id: 'pbq-dora',
     kind: 'order',
     title: 'Order the DHCP handshake',
