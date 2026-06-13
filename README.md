@@ -13,14 +13,21 @@ ease in. Visuals inspired by Tech With Diego's "Every Networking Concept Explain
 ## Modes
 
 - **Guided** missions are the hand-holding path: short, hands-on walkthroughs that teach an
-  idea, then make you do it on the real canvas. The screen dims, a spotlight ring lands on the
-  exact control you need, and the step only advances once you have actually done it (the app
-  checks live network state, not a "Next" click). Two missions so far:
-  - **Build your first network** places a switch, two hosts, cables them, and pings across.
-  - **Configure IP addresses by hand** switches off auto-addressing, has you type IP / mask /
-    gateway yourself, then breaks it on purpose (a second host in the wrong subnet) so the ping
-    fails and the event log tells you exactly why, then walks you through the fix. This is the
-    Network Troubleshooting domain in miniature.
+  idea, then make you do it on the real canvas. The screen dims to a light wash (not a blackout),
+  a coach bubble points at the exact control you need, and the step only advances once you have
+  actually done it (the app checks live network state, not a "Next" click). Each passed check
+  fires a green celebration. Six missions, rising in difficulty, grouped by category on the home
+  screen:
+  - **Fundamentals** — *Build your first network* (place, cable, ping) and *Configure IP
+    addresses by hand* (static IP/mask/gateway, then break it on purpose and fix it).
+  - **Subnetting** — *Reading the subnet mask*: two hosts that talk on a /24, then the same two
+    hosts cut off from each other the instant you tighten the mask to /26. The mask, not the
+    cable, defines the subnet.
+  - **Topology & Routing** — *Topologies and redundancy* (build a star, find its single point of
+    failure, add a redundant link, meet STP) and *Routing between two subnets* (a router joining
+    two /24s, the default gateway, a cross-subnet ping).
+  - **Protocols** — *The TCP three-way handshake*: an animated walkthrough of SYN / SYN-ACK / ACK
+    on the canvas, the data transfer, and the four-way FIN close, ending on TCP vs UDP.
 - **Visual Lab** has two sub-modes:
   - **Build** is a free sandbox: place, cable, inspect, and ping. Scroll to zoom, drag the
     background to pan.

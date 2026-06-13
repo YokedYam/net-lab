@@ -25,37 +25,70 @@ export function markDone(id: string) {
 
 // ---------- mission picker ----------
 
+const LEVEL_CLASS: Record<string, string> = {
+  Beginner: 'lvl beg',
+  Intermediate: 'lvl int',
+  Advanced: 'lvl adv',
+};
+
 export function GuidedHome({ onStart }: { onStart: (id: string) => void }) {
   const [done, setDone] = useState<Set<string>>(() => loadDone());
   useEffect(() => setDone(loadDone()), []);
+
+  // Group by category, preserving the order categories first appear (which is
+  // also the order of rising difficulty).
+  const cats: { name: string; items: { m: (typeof MISSIONS)[number]; n: number }[] }[] = [];
+  MISSIONS.forEach((m, i) => {
+    let c = cats.find((x) => x.name === m.category);
+    if (!c) {
+      c = { name: m.category, items: [] };
+      cats.push(c);
+    }
+    c.items.push({ m, n: i + 1 });
+  });
+
+  const doneCount = MISSIONS.filter((m) => done.has(m.id)).length;
+
   return (
     <div className="guided-home">
       <div className="gh-head">
         <h2>Guided missions</h2>
         <p>
-          Short, hands-on walkthroughs. The screen dims, spotlights the one control you need, and only
-          moves on once you have actually done it. Learn the idea, then do it on the real canvas.
+          Short, hands-on walkthroughs that build from the ground up. The screen dims, a spotlight
+          lands on the one control you need, and it only moves on once you have actually done it.
+          Learn the idea, then do it on the real canvas.
         </p>
+        <div className="gh-progress">
+          {doneCount} of {MISSIONS.length} complete
+        </div>
       </div>
-      <div className="gh-grid">
-        {MISSIONS.map((m, i) => (
-          <button key={m.id} className="gh-card" onClick={() => onStart(m.id)}>
-            <div className="gh-num">{String(i + 1).padStart(2, '0')}</div>
-            <div className="gh-body">
-              <div className="gh-title">
-                {m.title}
-                {done.has(m.id) && <span className="gh-check">✓ done</span>}
-              </div>
-              <div className="gh-sub">{m.subtitle}</div>
-              <div className="gh-meta">
-                <span className="gh-domain">{m.domain}</span>
-                <span className="gh-min">~{m.minutes} min</span>
-              </div>
-            </div>
-            <div className="gh-go">Start ▸</div>
-          </button>
-        ))}
-      </div>
+      {cats.map((c) => (
+        <details key={c.name} className="gh-cat" open>
+          <summary className="gh-cat-head">
+            <span className="gh-cat-name">{c.name}</span>
+            <span className="gh-cat-count">{c.items.length}</span>
+          </summary>
+          <div className="gh-grid">
+            {c.items.map(({ m, n }) => (
+              <button key={m.id} className="gh-card" onClick={() => onStart(m.id)}>
+                <div className="gh-num">{String(n).padStart(2, '0')}</div>
+                <div className="gh-body">
+                  <div className="gh-title">
+                    {m.title}
+                    {done.has(m.id) && <span className="gh-check">✓ done</span>}
+                  </div>
+                  <div className="gh-sub">{m.subtitle}</div>
+                  <div className="gh-meta">
+                    <span className={LEVEL_CLASS[m.level] ?? 'lvl'}>{m.level}</span>
+                    <span className="gh-min">~{m.minutes} min</span>
+                  </div>
+                </div>
+                <div className="gh-go">Start ▸</div>
+              </button>
+            ))}
+          </div>
+        </details>
+      ))}
     </div>
   );
 }
@@ -210,7 +243,7 @@ export function GuidedOverlay({
       )}
 
       {isTeach ? (
-        <div className="coach-lesson">
+        <div className={step.place === 'bottom' ? 'coach-lesson dock-bottom' : 'coach-lesson'}>
           <div className="coach-eyebrow-row">
             <span className="coach-eyebrow">{mission.title}</span>
             {stepN}

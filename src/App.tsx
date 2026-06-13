@@ -733,6 +733,29 @@ export default function App() {
     setTool: (t) => setTool(t),
     setTab: (t) => setTab(t),
     select: (id) => setSelectedId(id),
+    flight: (specs) => {
+      const ds = devicesRef.current;
+      const ls = linksRef.current;
+      const pos = new Map(ds.map((d) => [d.id, { x: d.x, y: d.y }]));
+      const fls: ActiveDemoFlight[] = [];
+      specs.forEach((s, i) => {
+        const a = ds.find((d) => d.name === s.from);
+        const b = ds.find((d) => d.name === s.to);
+        if (!a || !b) return;
+        const path = findPath(a.id, b.id, ls);
+        if (!path) return;
+        fls.push({
+          id: `mflight-${Date.now()}-${i}`,
+          points: path.map((id) => pos.get(id)!),
+          color: s.color,
+          label: s.label,
+          delay: s.delay ?? 0,
+        });
+      });
+      if (fls.length === 0) return;
+      flightsLeft.current = fls.length;
+      setDemoFlights(fls);
+    },
   };
 
   const missionCtx: MissionCtx = { devices, links, net, selectedId, tool, tab, pingCount, lastPingOk };

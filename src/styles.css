@@ -2179,3 +2179,78 @@ svg.scene text {
 .btn.ghost:hover {
   color: #c1cde6;
 }
+
+/* ---- guided home: categories + level badges ---- */
+.gh-progress {
+  margin-top: 12px;
+  display: inline-block;
+  font-size: 12px;
+  color: #6ee7b7;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.gh-cat {
+  margin-top: 18px;
+}
+
+.gh-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  padding: 6px 0;
+  user-select: none;
+}
+.gh-cat-head::-webkit-details-marker { display: none; }
+.gh-cat-head::before {
+  content: '▸';
+  color: #6b7d9e;
+  font-size: 11px;
+  transition: transform 0.15s;
+}
+.gh-cat[open] > .gh-cat-head::before { transform: rotate(90deg); }
+
+.gh-cat-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9fb0cc;
+}
+
+.gh-cat-count {
+  font-size: 11px;
+  color: #4d5e7e;
+  background: #131c30;
+  border: 1px solid #1c2842;
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.gh-cat .gh-grid {
+  margin-top: 10px;
+}
+
+.lvl {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.lvl.beg { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.1); }
+.lvl.int { color: #93c5fd; border-color: rgba(91, 157, 255, 0.4); background: rgba(91, 157, 255, 0.1); }
+.lvl.adv { color: #fca5a5; border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.1); }
+
+/* teach card docked low so a canvas animation stays visible above it */
+.coach-lesson.dock-bottom {
+  top: auto;
+  bottom: 28px;
+  transform: translateX(-50%);
+  animation: coachin 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
