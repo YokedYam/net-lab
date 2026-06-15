@@ -854,6 +854,15 @@ export default function App() {
           <div>
             <div className="brand-title">Net+ Visual Lab</div>
             <div className="brand-sub">learn networking by seeing it move</div>
+            <a
+              className="brand-by"
+              href="https://johnnynguyen.cloud"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Built by Johnny Nguyen — see more at johnnynguyen.cloud"
+            >
+              built by Johnny Nguyen ↗
+            </a>
           </div>
           {section === 'lab' && (
             <span className="counts" title="What is on the canvas right now">
