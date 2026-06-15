@@ -106,23 +106,27 @@ as bright vs dark" judgments.
 
 Done: Fundamentals (build a network, configure IPs), Subnetting (the /24 vs /26 boundary),
 Topology & Routing (star/redundancy/STP, two-subnet routing), Protocols (Ports, DHCP DORA, DNS,
-TCP 3-way, TLS), plus PBQs across all 5 domains including the two type-it-in formats.
+TCP 3-way, TLS), the **OSI + TCP/IP + encapsulation visualizer** (the `OSI Model` section:
+`src/osiData.ts` + `src/components/OsiModel.tsx`, a two-tower sender/receiver 7-layer stack that
+wraps the packet on the way down and strips it on the way up, links to `pbq-osi` and
+`pbq-osi-teachback`), the **Troubleshooting domain** (the `Troubleshoot` section:
+`src/troubleshootData.ts` + `src/components/Troubleshoot.tsx`, a clickable 7-step methodology
+flow, a "what each tool proves" CLI grid with a terminal readout, a live traceroute hop visual,
+and an arp -a table, links to `pbq-cli-tools`, `pbq-troubleshoot`, `pbq-tshoot-recall`), the
+**Matching mini game** (the `Match` section: `src/matchData.ts` + `src/components/MatchGame.tsx`,
+a Quizlet-style timed tile match with 5 curated sets plus a Mixed pool, wrong-tap penalties, and
+best-time-per-set saved to localStorage), a **per-session timer** in the top-right
+(`src/components/SessionTimer.tsx`, counts up from 0 and restarts fresh on every refresh/return),
+plus PBQs across all 5 domains including the two type-it-in formats.
 
 Next, highest value first:
 
-1. **OSI + TCP/IP model + encapsulation visualizer** (Domain 1.1, the most-tested concept).
-   A new component: a 7-layer stack where data moves DOWN gaining headers (Transport=ports,
-   Network=IPs, Data Link=MACs), crosses as bits, then UP stripping headers. There is already a
-   `teachback` PBQ (`pbq-osi-teachback`) and a `match` PBQ (`pbq-osi`) to link to.
-2. **Troubleshooting domain (24%, biggest)** — a guided 7-step methodology flow; a "what each
-   CLI tool proves" mission with a traceroute hop visual and an ARP-table view. PBQs exist
-   (`pbq-cli-tools`, `pbq-tshoot-recall`, `pbq-troubleshoot`) to cross-link.
-3. **Security missions** — firewall ACL/rules (extend the existing firewall device), and an
+1. **Security missions** — firewall ACL/rules (extend the existing firewall device), and an
    ARP spoofing / on-path attack as a `SequenceDiagram` mission (cheap, reuses the engine).
-4. **Implementation** — VLANs (needs port-tagging in the model), NAT/PAT (needs an internet/
+2. **Implementation** — VLANs (needs port-tagging in the model), NAT/PAT (needs an internet/
    cloud node), 802.11 wireless (needs a new Access Point device type: icon, NIC rules,
    addressing). `pbq-wifi` and `pbq-cabling` exist to link to.
-5. Add `Mission.pbq` links to the remaining missions where a matching PBQ exists.
+3. Add `Mission.pbq` links to the remaining missions where a matching PBQ exists.
 
 ## Definition of done for any change
 

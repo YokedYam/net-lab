@@ -18,15 +18,45 @@ body {
   overflow: hidden;
 }
 
+/* Consistent thin scrollbars across platforms. Windows defaults to chunky
+   opaque scrollbars that visually shrink narrow panels like the event log;
+   this keeps them slim and dark like macOS overlay scrollbars everywhere. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3a5e transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3a5e;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4d76;
+  background-clip: padding-box;
+}
+
 /* ---------- top bar ---------- */
 
 .topbar {
-  height: 54px;
   flex: none;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
+  column-gap: 12px;
+  row-gap: 4px;
+  padding: 7px 16px;
   background: #0d1322;
   border-bottom: 1px solid #1c2742;
 }
@@ -35,8 +65,9 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-width: 0;
+  order: 1;
 }
 
 .brand-dot {
@@ -51,26 +82,116 @@ body {
   font-weight: 700;
   font-size: 15px;
   letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .brand-sub {
   font-size: 11px;
   color: #6b7d9e;
+  white-space: nowrap;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-width: 0;
+  order: 2;
   justify-content: flex-end;
 }
 
 .counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  padding: 4px 10px;
   font-size: 12px;
-  color: #6b7d9e;
-  margin-right: 8px;
+  color: #8aa0c4;
+  background: #0a0f1c;
+  border: 1px solid #1c2742;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.counts strong {
+  color: #e8eefb;
+  font-weight: 700;
+}
+
+.counts-sep {
+  color: #3a4866;
+}
+
+.lab-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.nav-toggle span {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Session timer (top right) */
+.session-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.session-clock {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px 5px 11px;
+  background: #0a1f1c;
+  border: 1px solid #1f5141;
+  border-radius: 999px;
+  color: #5eead4;
+}
+
+.session-time {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  min-width: 44px;
+  text-align: center;
+}
+
+.session-reset {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #1f5141;
+  background: transparent;
+  color: #5eead4;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.session-reset:hover {
+  background: #0e3a32;
+  color: #a7f3d0;
 }
 
 .btn {
@@ -110,7 +231,7 @@ body {
 /* ---------- toolbar ---------- */
 
 .toolbar {
-  width: 148px;
+  width: clamp(148px, 11vw, 188px);
   flex: none;
   background: #0d1322;
   border-right: 1px solid #1c2742;
@@ -331,7 +452,7 @@ svg.scene text {
 /* ---------- side panels ---------- */
 
 .side {
-  width: 300px;
+  width: clamp(300px, 22vw, 420px);
   flex: none;
   background: #0d1322;
   border-left: 1px solid #1c2742;
@@ -519,12 +640,12 @@ svg.scene text {
   flex: 1;
   overflow-y: auto;
   padding: 4px 14px 12px;
-  font-size: 12px;
-  line-height: 1.55;
+  font-size: 12.5px;
+  line-height: 1.6;
 }
 
 .log-entry {
-  padding: 2px 0;
+  padding: 3px 0;
   border-bottom: 1px solid #10182c;
 }
 
@@ -898,13 +1019,21 @@ svg.scene text {
 
 /* ---------- top section nav ---------- */
 .sectionnav {
+  order: 3;
+  flex: 1 1 100%;
   display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
   gap: 4px;
-  flex: 0 0 auto;
-  background: #0a0f1c;
-  border: 1px solid #1c2742;
-  border-radius: 10px;
-  padding: 3px;
+  margin-top: 2px;
+  padding-top: 5px;
+  border-top: 1px solid #16213a;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sectionnav::-webkit-scrollbar {
+  display: none;
 }
 
 .snav {
@@ -913,9 +1042,11 @@ svg.scene text {
   color: #9fb0cc;
   font-size: 12.5px;
   font-weight: 600;
-  padding: 6px 14px;
+  padding: 6px 13px;
   border-radius: 7px;
   cursor: pointer;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .snav:hover {
@@ -1376,6 +1507,63 @@ svg.scene text {
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 12px;
   margin-top: 6px;
+}
+
+/* Domain accordions on the PBQ landing page keep the task list from crowding
+   the screen. First domain opens by default, the rest collapse. */
+.pbq-cat {
+  margin-top: 16px;
+  border: 1px solid #1c2842;
+  border-radius: 12px;
+  background: #0b1322;
+  overflow: hidden;
+}
+
+.pbq-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 16px;
+  user-select: none;
+  border-left: 3px solid var(--accent, #3b82f6);
+}
+.pbq-cat-head::-webkit-details-marker { display: none; }
+.pbq-cat-head::after {
+  content: '▸';
+  margin-left: auto;
+  color: #6b7d9e;
+  font-size: 12px;
+  transition: transform 0.15s;
+}
+.pbq-cat[open] > .pbq-cat-head::after { transform: rotate(90deg); }
+
+.pbq-cat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.pbq-cat-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8eefb;
+}
+
+.pbq-cat-meta {
+  font-size: 11.5px;
+  color: #6b7d9e;
+}
+
+.pbq-cat[open] > .pbq-cat-head {
+  border-bottom: 1px solid #1c2842;
+}
+
+.pbq-cat > .pbq-grid {
+  margin: 0;
+  padding: 14px 16px 16px;
 }
 
 .pbq-tile {
@@ -2391,4 +2579,1452 @@ svg.scene text {
 .tb-selfcheck {
   color: #fcd34d !important;
   font-size: 12.5px !important;
+}
+
+/* ---------- OSI / TCP-IP encapsulation visualizer ---------- */
+.osi {
+  display: flex;
+  flex-direction: column;
+}
+
+.osi-intro {
+  max-width: 760px;
+  margin: 0 auto 14px;
+  text-align: center;
+}
+
+.osi-stage {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.osi-caption {
+  background: linear-gradient(180deg, #101c33, #0c1525);
+  border: 1px solid #243355;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  gap: 8px 14px;
+  height: 108px;
+  overflow: hidden;
+}
+
+.osi-phase {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #5eead4;
+  align-self: center;
+}
+
+.osi-pdu {
+  justify-self: end;
+  align-self: center;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #9fb0cc;
+  background: #0a0f1c;
+  border: 1px solid #243355;
+  border-radius: 6px;
+  padding: 3px 9px;
+}
+
+.osi-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #dbe4f3;
+}
+
+/* Fixed-height packet read-out. Stays put so the towers and controls below it
+   never move while the packet gains or loses headers. */
+.osi-packet-bar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: #0a0f1c;
+  border: 1px solid #1f2c49;
+  border-radius: 10px;
+  padding: 0 14px;
+  margin-bottom: 16px;
+}
+
+.osi-dir {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #93c5fd;
+  width: 110px;
+}
+
+.osi-packet-bar[data-side='wire'] .osi-dir {
+  color: #5eead4;
+}
+
+.osi-pdu-now {
+  flex: none;
+  width: 110px;
+  text-align: right;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e8eefb;
+}
+
+.osi-grid {
+  display: grid;
+  grid-template-columns: 1fr 90px 1fr;
+  gap: 6px 0;
+  align-items: stretch;
+}
+
+.osi-grid-row {
+  display: contents;
+}
+
+.osi-grid-spacer {
+  grid-column: 2;
+}
+
+.osi-cell {
+  display: flex;
+  align-items: stretch;
+}
+
+.osi-cell.send,
+.osi-cell.recv {
+  min-width: 0;
+}
+
+.osi-cell .osi-row {
+  height: 100%;
+  align-content: center;
+}
+
+.osi-tower-head {
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #6b7d9e;
+  margin-bottom: 4px;
+}
+
+.osi-row {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: #0d1424;
+  border: 1px solid #1f2c49;
+  border-radius: 9px;
+  padding: 8px 10px;
+  color: #c4d0e6;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.2s;
+}
+
+.osi-row:hover {
+  border-color: #34507f;
+}
+
+.osi-row.active {
+  border-color: #3b82f6;
+  background: #14233f;
+  box-shadow: 0 0 18px #3b82f644;
+}
+
+.osi-cell.recv .osi-row {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.osi-num {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #0a0e1a;
+  background: #5b7bb4;
+}
+
+.osi-row.active .osi-num {
+  background: #60a5fa;
+}
+
+.osi-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 48px;
+  overflow: hidden;
+}
+
+.osi-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #e8eefb;
+}
+
+.osi-job {
+  font-size: 11px;
+  color: #8194b5;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.osi-tag {
+  flex: none;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 2px 7px;
+  color: #0a0e1a;
+}
+
+.osi-tag.gapplication { background: #c4b5fd; }
+.osi-tag.gtransport { background: #93c5fd; }
+.osi-tag.ginternet { background: #a7f3d0; }
+.osi-tag.glink { background: #fcd9a8; }
+
+.osi-packet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: #060a14;
+  border: 1px solid #243355;
+  border-radius: 7px;
+  padding: 5px 6px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+  animation: osipop 0.35s ease;
+}
+
+@keyframes osipop {
+  from {
+    transform: translateY(-4px);
+  }
+}
+
+.osi-chip {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 3px 8px;
+  color: #0a0e1a;
+}
+
+.osi-chip.data { background: #86efac; }
+.osi-chip.port { background: #93c5fd; }
+.osi-chip.ip { background: #c4b5fd; }
+.osi-chip.mac { background: #5eead4; }
+.osi-chip.fcs { background: #94a3b8; }
+
+.osi-bits {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #5eead4;
+  background: #060a14;
+  border: 1px solid #1f6f63;
+  border-radius: 7px;
+  padding: 6px 8px;
+  text-align: center;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+  animation: osibits 1s linear infinite;
+}
+
+@keyframes osibits {
+  50% { opacity: 0.55; }
+}
+
+.osi-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.osi-link-line {
+  width: 100%;
+  height: 3px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(90deg, #2c3c63 0 7px, transparent 7px 13px);
+}
+
+.osi-link-line.hot {
+  background: repeating-linear-gradient(90deg, #2dd4bf 0 7px, transparent 7px 13px);
+  box-shadow: 0 0 12px #2dd4bf99;
+}
+
+.osi-link-label {
+  margin-top: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #4d5e7e;
+}
+
+.osi-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.osi-progress {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #6b7d9e;
+  margin-left: 4px;
+}
+
+.osi-extras {
+  max-width: 1000px;
+  width: 100%;
+  margin: 26px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.osi-card {
+  background: #0c1322;
+  border: 1px solid #1f2c49;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.osi-card h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #e8eefb;
+}
+
+.osi-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.osi-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: #aebcd8;
+}
+
+.osi-fine {
+  margin: 11px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #8194b5;
+}
+
+.osi-tcpip,
+.osi-mnem {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.osi-tcpip-row {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 10px;
+}
+
+.osi-tcpip-name {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #e8eefb;
+}
+
+.osi-tcpip-span {
+  justify-self: end;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #5eead4;
+}
+
+.osi-tcpip-note {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  color: #8194b5;
+}
+
+.osi-mnem-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.osi-mnem-order {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #4d5e7e;
+}
+
+.osi-mnem-phrase {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fcd34d;
+}
+
+.osi-mnem-hint {
+  font-size: 11px;
+  color: #8194b5;
+}
+
+.osi-practice {
+  max-width: 1000px;
+  width: 100%;
+  margin: 26px auto 10px;
+  text-align: center;
+}
+
+.osi-practice-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #4d5e7e;
+  margin-bottom: 12px;
+}
+
+.osi-practice-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+@media (max-width: 860px) {
+  .osi-extras {
+    grid-template-columns: 1fr;
+  }
+  .osi-job {
+    display: none;
+  }
+}
+
+/* ── Troubleshooting (Domain 5.0) ───────────────────────────────────────── */
+.ts {
+}
+
+.ts-intro {
+  max-width: 760px;
+  margin: 0 auto 18px;
+  text-align: center;
+}
+
+.ts-block {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto 34px;
+}
+
+.ts-h2 {
+  font-size: 18px;
+  color: #e8eefb;
+  margin: 0 0 6px;
+}
+
+.ts-sub {
+  font-size: 13.5px;
+  color: #9fb0cc;
+  line-height: 1.55;
+  margin: 0 0 14px;
+  max-width: 760px;
+}
+
+.ts-fine {
+  font-size: 12.5px;
+  color: #8194b5;
+  line-height: 1.55;
+  margin: 12px 0 0;
+}
+
+/* Seven-step pills */
+.ts-steps {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ts-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  background: #0d1424;
+  border: 1px solid #1f2c49;
+  border-radius: 10px;
+  padding: 10px 8px;
+  color: #9fb0cc;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.2s;
+}
+
+.ts-step:hover {
+  border-color: #34507f;
+}
+
+.ts-step.done {
+  border-color: #1f5141;
+}
+
+.ts-step.active {
+  border-color: #f472b6;
+  background: #2a1424;
+  box-shadow: 0 0 16px #f472b633;
+}
+
+.ts-step-n {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #0a0e1a;
+  background: #5b7bb4;
+}
+
+.ts-step.active .ts-step-n {
+  background: #f472b6;
+}
+
+.ts-step.done .ts-step-n {
+  background: #34d399;
+}
+
+.ts-step-name {
+  font-size: 11px;
+  line-height: 1.25;
+  color: #c4d0e6;
+}
+
+/* Step detail card, fixed-ish height so switching steps does not jump */
+.ts-step-card {
+  background: linear-gradient(180deg, #101c33, #0c1525);
+  border: 1px solid #243355;
+  border-radius: 12px;
+  padding: 16px 18px;
+  min-height: 188px;
+}
+
+.ts-step-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ts-step-head h3 {
+  margin: 0;
+  font-size: 17px;
+  color: #e8eefb;
+}
+
+.ts-step-badge {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #f472b6;
+  background: #2a1424;
+  border: 1px solid #5e2545;
+  border-radius: 6px;
+  padding: 3px 9px;
+}
+
+.ts-step-action {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #dbe4f3;
+  margin: 0 0 12px;
+}
+
+.ts-step-applied,
+.ts-step-tip {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 8px 0;
+  border-top: 1px solid #182338;
+}
+
+.ts-step-applied p,
+.ts-step-tip p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #c4d0e6;
+}
+
+.ts-tag-applied,
+.ts-tag-tip {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+  padding: 3px 6px;
+  text-align: center;
+  height: fit-content;
+}
+
+.ts-tag-applied {
+  color: #5eead4;
+  background: #08231f;
+  border: 1px solid #1f5141;
+}
+
+.ts-tag-tip {
+  color: #fcd34d;
+  background: #231b06;
+  border: 1px solid #5e4a16;
+}
+
+.ts-step-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.ts-progress {
+  margin-left: auto;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #6b7d9e;
+}
+
+/* CLI tool cards */
+.ts-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ts-tool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  background: #0d1424;
+  border: 1px solid #1f2c49;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ts-tool:hover {
+  border-color: #34507f;
+}
+
+.ts-tool.active {
+  border-color: #60a5fa;
+  background: #14233f;
+  box-shadow: 0 0 16px #3b82f633;
+}
+
+.ts-tool-name {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e8eefb;
+}
+
+.ts-tool-proves {
+  font-size: 12px;
+  color: #9fb0cc;
+  line-height: 1.4;
+}
+
+.ts-tool-live {
+  margin-top: 2px;
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #5eead4;
+  background: #08231f;
+  border: 1px solid #1f5141;
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+/* Terminal readout */
+.ts-term {
+  background: #060a14;
+  border: 1px solid #243355;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ts-term-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  background: #0d1424;
+  border-bottom: 1px solid #1f2c49;
+}
+
+.ts-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.ts-dot.r { background: #ff5f56; }
+.ts-dot.y { background: #ffbd2e; }
+.ts-dot.g { background: #27c93f; }
+
+.ts-term-title {
+  margin-left: 6px;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #c4d0e6;
+}
+
+.ts-term-layer {
+  margin-left: auto;
+  font-size: 11px;
+  color: #6b7d9e;
+}
+
+.ts-term-body {
+  padding: 14px 16px;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  min-height: 96px;
+}
+
+.ts-term-cmd {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #e8eefb;
+}
+
+.ts-prompt {
+  color: #5eead4;
+  font-weight: 700;
+}
+
+.ts-term-out {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: #8fb8ff;
+  line-height: 1.5;
+}
+
+.ts-term-proves {
+  margin: 0;
+  font-size: 12.5px;
+  color: #9fb0cc;
+}
+
+.ts-term-q {
+  color: #fcd34d;
+  font-weight: 700;
+}
+
+/* traceroute hops */
+.ts-trace {
+  background: #0c1525;
+  border: 1px solid #243355;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.ts-hop {
+  display: grid;
+  grid-template-columns: 34px 130px 110px 1fr 1.4fr;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px;
+  border-bottom: 1px solid #131c30;
+  opacity: 1;
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.ts-hop.pending {
+  opacity: 0.18;
+}
+
+.ts-hop.in {
+  animation: tshopin 0.3s ease;
+}
+
+@keyframes tshopin {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+.ts-hop-n {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #0a0e1a;
+  background: #5b7bb4;
+}
+
+.ts-hop.dead .ts-hop-n {
+  background: #6b2740;
+  color: #ffc9d8;
+}
+
+.ts-hop-ip {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  color: #e8eefb;
+}
+
+.ts-hop-host {
+  font-size: 11.5px;
+  color: #8194b5;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ts-hop-bar-wrap {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+}
+
+.ts-hop-bar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 20px;
+  min-width: 44px;
+  padding: 0 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #04121e;
+  background: linear-gradient(90deg, #34d399, #60a5fa);
+  white-space: nowrap;
+}
+
+.ts-hop-timeout {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fb7185;
+}
+
+.ts-hop-note {
+  font-size: 12px;
+  color: #9fb0cc;
+  line-height: 1.4;
+}
+
+.ts-trace-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 8px 4px;
+}
+
+.ts-trace-foot .btn {
+  flex: none;
+}
+
+.ts-verdict {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #c4d0e6;
+}
+
+/* arp table */
+.ts-arp {
+  border: 1px solid #243355;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ts-arp-row {
+  display: grid;
+  grid-template-columns: 130px 170px 110px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #131c30;
+  font-size: 12.5px;
+  color: #c4d0e6;
+}
+
+.ts-arp-row:last-child {
+  border-bottom: none;
+}
+
+.ts-arp-head {
+  background: #0d1424;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7d9e;
+}
+
+.ts-arp-row.incomplete {
+  background: #1c0f14;
+}
+
+.ts-arp-ip,
+.ts-arp-mac {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  color: #e8eefb;
+}
+
+.ts-arp-state {
+  justify-self: start;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  border: 1px solid;
+}
+
+.ts-arp-state.dynamic {
+  color: #5eead4;
+  background: #08231f;
+  border-color: #1f5141;
+}
+
+.ts-arp-state.static {
+  color: #93c5fd;
+  background: #0c1a33;
+  border-color: #1e3a66;
+}
+
+.ts-arp-state.incomplete {
+  color: #fb7185;
+  background: #2a0f17;
+  border-color: #6b2740;
+}
+
+.ts-arp-note {
+  color: #9fb0cc;
+  line-height: 1.4;
+}
+
+/* practice deep-links */
+.ts-practice {
+  max-width: 1000px;
+  width: 100%;
+  margin: 6px auto 0;
+  text-align: center;
+}
+
+.ts-practice-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6b7d9e;
+  margin-bottom: 12px;
+}
+
+.ts-practice-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+@media (max-width: 860px) {
+  .ts-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .ts-hop {
+    grid-template-columns: 28px 1fr 1fr;
+  }
+  .ts-hop-host,
+  .ts-hop-note {
+    display: none;
+  }
+  .ts-arp-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ts-arp-note {
+    display: none;
+  }
+}
+
+/* ── Matching mini game ─────────────────────────────────────────────────── */
+.study-match {
+  position: relative;
+}
+
+.match-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto 18px;
+  padding: 10px 14px;
+  background: #0d1424;
+  border: 1px solid #1f2c49;
+  border-radius: 12px;
+}
+
+.match-setname {
+  font-weight: 700;
+  font-size: 14px;
+  color: #e8eefb;
+}
+
+.match-hud {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.match-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.match-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6b7d9e;
+}
+
+.match-stat-val {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8eefb;
+}
+
+.match-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.match-tile {
+  position: relative;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #dbe4f3;
+  background: #0e1729;
+  border: 1.5px solid #243355;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, transform 0.1s, box-shadow 0.15s, opacity 0.25s;
+}
+
+.match-tile:hover:not(.matched):not(.wrong) {
+  border-color: #34507f;
+  background: #122038;
+}
+
+.match-tile.term {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  color: #e8eefb;
+}
+
+.match-tile.sel {
+  border-color: #3b82f6;
+  background: #13233f;
+  box-shadow: 0 0 0 1.5px #3b82f6, 0 0 22px rgba(59, 130, 246, 0.6),
+    0 0 6px rgba(96, 165, 250, 0.5) inset;
+  transform: translateY(-1px);
+}
+
+.match-tile.wrong {
+  border-color: #ef4444;
+  background: #2a1115;
+  color: #fca5a5;
+  animation: matchshake 0.32s ease;
+}
+
+@keyframes matchshake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.match-tile.matched {
+  border-color: #1f5141;
+  background: #0a1f1c;
+  color: #1f5141;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  animation: matchpop 0.3s ease forwards;
+}
+
+@keyframes matchpop {
+  0% { opacity: 1; transform: scale(1); visibility: visible; }
+  60% { opacity: 1; transform: scale(1.05); visibility: visible; }
+  100% { opacity: 0; transform: scale(0.9); visibility: hidden; }
+}
+
+/* Completion card */
+.match-done-wrap {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 22, 0.72);
+  backdrop-filter: blur(3px);
+  z-index: 5;
+}
+
+.match-done {
+  width: min(440px, 90vw);
+  text-align: center;
+  background: linear-gradient(180deg, #101c33, #0c1525);
+  border: 1px solid var(--accent, #3b82f6);
+  border-radius: 16px;
+  padding: 26px 28px 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 30px color-mix(in srgb, var(--accent, #3b82f6) 25%, transparent);
+}
+
+.match-done h2 {
+  margin: 0 0 18px;
+  font-size: 24px;
+  color: #e8eefb;
+}
+
+.match-done-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 6px;
+  background: #0a0f1c;
+  border: 1px solid #1f2c49;
+  border-radius: 10px;
+}
+
+.mds-val {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent, #60a5fa);
+}
+
+.mds-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7d9e;
+}
+
+.match-done-best {
+  min-height: 18px;
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: #5eead4;
+}
+
+.match-done-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .match-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .match-bar {
+    flex-wrap: wrap;
+  }
+  .match-hud {
+    gap: 12px;
+  }
+}
+
+/* ===========================================================================
+   MOBILE — on-the-go studying (<=720px).
+   The study modes that work on a phone (Quiz, Flashcards, Match, PBQs, OSI,
+   Troubleshoot) stay usable; the canvas modes (Visual Lab, Guided) are gated
+   behind a "best on desktop" notice in App.tsx, and a one-time banner points
+   users there. The section nav becomes a horizontal scroll strip so you can
+   always move between modes.
+   =========================================================================== */
+
+/* One-time heads-up banner shown under the topbar on phones. */
+.mobile-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: none;
+  margin: 0;
+  padding: 11px 12px 11px 13px;
+  background: #0d1b2a;
+  border-bottom: 1px solid #1c2742;
+  border-left: 3px solid #2dd4bf;
+}
+.mobile-banner-text {
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #b9c6db;
+}
+.mobile-banner-text strong {
+  color: #e8eefb;
+}
+.mobile-banner-close {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: #6b7d9e;
+  font-size: 15px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.mobile-banner-close:hover {
+  background: #15233f;
+  color: #e8eefb;
+}
+
+/* "This mode is built for desktop" card, shown in place of Lab / Guided. */
+.desktop-only {
+  max-width: 460px;
+  margin: 6vh auto 0;
+  text-align: center;
+  background: #0d1322;
+  border: 1px solid #1c2742;
+  border-radius: 14px;
+  padding: 30px 24px;
+}
+.desktop-only-icon {
+  font-size: 40px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.desktop-only h2 {
+  font-size: 18px;
+  color: #e8eefb;
+  margin: 0 0 8px;
+}
+.desktop-only p {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #9fb0cc;
+}
+.desktop-only .desktop-only-tip {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #1c2742;
+  color: #6b7d9e;
+}
+
+@media (max-width: 720px) {
+  /* ----- Topbar wraps: brand + actions on row 1, nav strip on row 2 ----- */
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .brand {
+    flex: 1 1 auto;
+  }
+  .brand-sub,
+  .counts,
+  .lab-actions {
+    display: none;
+  }
+  .topbar-right {
+    flex: 0 0 auto;
+  }
+  /* Section nav becomes a full-width horizontal scroll strip (it was hidden). */
+  .sectionnav {
+    display: flex;
+    order: 3;
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+  }
+  .sectionnav::-webkit-scrollbar {
+    display: none;
+  }
+  .snav {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 7px 12px;
+  }
+
+  /* ----- Study shell: tighter padding on a phone ----- */
+  .study {
+    padding: 18px 14px 56px;
+  }
+  .study-intro {
+    margin-top: 2vh;
+  }
+
+  /* ----- PBQ + Match rows stack so the control gets full width ----- */
+  .match-row,
+  .cat-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .match-select,
+  .recall-input {
+    width: 100%;
+    min-height: 44px;
+    font-size: 15px;
+  }
+  .seg {
+    flex-wrap: wrap;
+  }
+  .seg-btn {
+    flex: 1 1 auto;
+    min-height: 42px;
+  }
+  .subnet-fields {
+    grid-template-columns: 1fr;
+  }
+  .subnet-field input {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  .order-moves .btn {
+    min-width: 38px;
+    min-height: 38px;
+  }
+  .pbq-card {
+    padding: 16px;
+  }
+  .big-btn {
+    min-height: 44px;
+  }
+
+  /* ----- Troubleshoot: fewer step columns, simpler tables on a phone ----- */
+  .ts-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ts-tools {
+    grid-template-columns: 1fr;
+  }
+  .ts-arp-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* ----- Match grid stays two columns and roomy for taps ----- */
+  .match-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .match-tile {
+    min-height: 56px;
+  }
+}
+
+/* ===========================================================================
+   TABLET / small-desktop lab (721px-1024px). The lab is gated to desktop below
+   721px; between there and a roomy desktop the three panes get tight, so trim
+   the side rails and padding to keep the canvas usable. Larger screens get the
+   roomier clamped widths set on .toolbar / .side above.
+   =========================================================================== */
+@media (min-width: 721px) and (max-width: 1024px) {
+  .toolbar {
+    width: 132px;
+  }
+  .side {
+    width: clamp(248px, 26vw, 300px);
+  }
+}
+
+@media (min-width: 721px) and (max-width: 880px) {
+  .toolbar {
+    width: 118px;
+    padding: 8px 6px;
+  }
+  .side {
+    width: 232px;
+  }
+  .tool-btn {
+    font-size: 12px;
+  }
 }

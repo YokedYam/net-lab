@@ -39,7 +39,13 @@ import { DemoAnnotations } from './components/DemoAnnotations';
 import { QuizMode } from './components/QuizMode';
 import { Flashcards } from './components/Flashcards';
 import { PbqMode } from './components/PbqMode';
+import { OsiModel } from './components/OsiModel';
+import { Troubleshoot } from './components/Troubleshoot';
+import { MatchGame } from './components/MatchGame';
+import { SessionTimer } from './components/SessionTimer';
 import { GuidedHome, GuidedOverlay, markDone } from './components/Guided';
+import { MobileBanner, DesktopOnlyNotice } from './components/MobileNotice';
+import { useIsMobile } from './useIsMobile';
 import type { MissionApi, MissionCtx } from './missions';
 import { missionById } from './missions';
 
@@ -55,12 +61,15 @@ const NIC_LIMIT: Record<DeviceType, number> = {
 const DEVICE_TOOLS: DeviceType[] = ['laptop', 'pc', 'server', 'switch', 'router', 'firewall'];
 const isDeviceTool = (t: Tool): t is DeviceType => DEVICE_TOOLS.includes(t as DeviceType);
 
-type Section = 'lab' | 'guided' | 'quiz' | 'flashcards' | 'pbq';
+type Section = 'lab' | 'guided' | 'osi' | 'tshoot' | 'quiz' | 'flashcards' | 'match' | 'pbq';
 const SECTIONS: { id: Section; label: string }[] = [
   { id: 'lab', label: 'Visual Lab' },
   { id: 'guided', label: 'Guided' },
+  { id: 'osi', label: 'OSI Model' },
+  { id: 'tshoot', label: 'Troubleshoot' },
   { id: 'quiz', label: 'Quiz' },
   { id: 'flashcards', label: 'Flashcards' },
+  { id: 'match', label: 'Match' },
   { id: 'pbq', label: 'PBQs' },
 ];
 
@@ -247,6 +256,7 @@ function DeviceNode({
 }
 
 export default function App() {
+  const isMobile = useIsMobile();
   const initial = useMemo(demoState, []);
   const [devices, setDevices] = useState<Device[]>(initial.devices);
   const [links, setLinks] = useState<Link[]>(initial.links);
@@ -266,6 +276,24 @@ export default function App() {
   const [demoHighlight, setDemoHighlight] = useState<Set<string> | null>(null);
   const [demoNotes, setDemoNotes] = useState<DemoNote[] | null>(null);
   const [section, setSection] = useState<Section>('lab');
+  const [navOpen, setNavOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('netlab.nav.open') !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const toggleNav = useCallback(() => {
+    setNavOpen((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem('netlab.nav.open', next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
   const [mission, setMission] = useState<{ id: string; step: number } | null>(null);
   const [pingCount, setPingCount] = useState(0);
   const [lastPingOk, setLastPingOk] = useState(false);
@@ -827,43 +855,70 @@ export default function App() {
             <div className="brand-title">Net+ Visual Lab</div>
             <div className="brand-sub">learn networking by seeing it move</div>
           </div>
-        </div>
-        <nav className="sectionnav">
-          {SECTIONS.map((s) => (
-            <button
-              key={s.id}
-              className={section === s.id ? 'snav active' : 'snav'}
-              onClick={() => setSection(s.id)}
-            >
-              {s.label}
-            </button>
-          ))}
-        </nav>
-        <div className="topbar-right">
           {section === 'lab' && (
-            <>
-              <span className="counts">
-                {devices.length} devices · {links.length} cables · {net.segments.length} networks
-              </span>
+            <span className="counts" title="What is on the canvas right now">
+              <strong>{devices.length}</strong> devices
+              <span className="counts-sep">·</span>
+              {links.length} cables
+              <span className="counts-sep">·</span>
+              {net.segments.length} networks
+            </span>
+          )}
+        </div>
+        {navOpen && (
+          <nav className="sectionnav">
+            {SECTIONS.map((s) => (
+              <button
+                key={s.id}
+                className={section === s.id ? 'snav active' : 'snav'}
+                onClick={() => setSection(s.id)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </nav>
+        )}
+        <div className="topbar-right">
+          <button
+            className="btn nav-toggle"
+            onClick={toggleNav}
+            aria-pressed={navOpen}
+            title={navOpen ? 'Hide the section tabs' : 'Show the section tabs'}
+          >
+            <span aria-hidden>{navOpen ? '\u2715' : '\u2630'}</span>
+            {navOpen ? 'Hide tabs' : SECTIONS.find((s) => s.id === section)?.label ?? 'Menu'}
+          </button>
+          {section === 'lab' && (
+            <div className="lab-actions">
               <button className="btn" onClick={loadDemo}>
                 Starter
               </button>
               <button className="btn" onClick={clearAll}>
                 Clear
               </button>
-            </>
+            </div>
           )}
+          <SessionTimer />
           <button className="btn accent" onClick={() => setShowHelp(true)}>
             Help
           </button>
         </div>
       </header>
-      {section === 'guided' && !mission ? (
+      {isMobile && <MobileBanner />}
+      {isMobile && (section === 'lab' || section === 'guided') ? (
+        <DesktopOnlyNotice section={section} />
+      ) : section === 'guided' && !mission ? (
         <GuidedHome onStart={startMission} />
+      ) : section === 'osi' ? (
+        <OsiModel onPractice={openPbq} onResource={goToResource} />
+      ) : section === 'tshoot' ? (
+        <Troubleshoot onPractice={openPbq} onResource={goToResource} />
       ) : section === 'quiz' ? (
         <QuizMode onResource={goToResource} />
       ) : section === 'flashcards' ? (
         <Flashcards onResource={goToResource} />
+      ) : section === 'match' ? (
+        <MatchGame />
       ) : section === 'pbq' ? (
         <PbqMode onResource={goToResource} openRequest={pbqReq} />
       ) : (

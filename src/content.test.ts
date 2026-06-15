@@ -3,6 +3,9 @@ import { QUIZ } from './quizData';
 import { FLASHCARDS } from './flashcardData';
 import { PBQS } from './pbqData';
 import { CONCEPTS } from './concepts';
+import { OSI_LAYERS, OSI_JOURNEY, OSI_MNEMONICS, TCPIP_GROUPS } from './osiData';
+import { TSHOOT_STEPS, CLI_TOOLS, TRACE_HOPS, TRACE_VERDICT, ARP_ROWS, ARP_NOTE } from './troubleshootData';
+import { MATCH_SETS } from './matchData';
 import { DOMAINS, subnetFacts, type SubnetField } from './study';
 
 const CONCEPT_IDS = new Set(CONCEPTS.map((c) => c.id));
@@ -105,6 +108,27 @@ describe('PBQs', () => {
   });
 });
 
+describe('Matching sets', () => {
+  it('has unique set ids and valid domains', () => {
+    const ids = MATCH_SETS.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const s of MATCH_SETS) expect(DOMAIN_IDS.has(s.domain)).toBe(true);
+  });
+  it('every set has at least the round size in pairs, with unique terms and defs', () => {
+    for (const s of MATCH_SETS) {
+      expect(s.pairs.length).toBeGreaterThanOrEqual(6);
+      const terms = s.pairs.map((p) => p.term);
+      const defs = s.pairs.map((p) => p.def);
+      expect(new Set(terms).size).toBe(terms.length);
+      expect(new Set(defs).size).toBe(defs.length);
+      for (const p of s.pairs) {
+        expect(p.term.trim().length).toBeGreaterThan(0);
+        expect(p.def.trim().length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
 describe('Humanizer voice regression guard', () => {
   it('no em dashes (\\u2014) anywhere in user-facing content', () => {
     const offenders: string[] = [];
@@ -117,6 +141,17 @@ describe('Humanizer voice regression guard', () => {
     scan('FLASHCARDS', FLASHCARDS);
     scan('PBQS', PBQS);
     scan('CONCEPTS', CONCEPTS);
+    scan('OSI_LAYERS', OSI_LAYERS);
+    scan('OSI_JOURNEY', OSI_JOURNEY);
+    scan('OSI_MNEMONICS', OSI_MNEMONICS);
+    scan('TCPIP_GROUPS', TCPIP_GROUPS);
+    scan('TSHOOT_STEPS', TSHOOT_STEPS);
+    scan('CLI_TOOLS', CLI_TOOLS);
+    scan('TRACE_HOPS', TRACE_HOPS);
+    scan('TRACE_VERDICT', TRACE_VERDICT);
+    scan('ARP_ROWS', ARP_ROWS);
+    scan('ARP_NOTE', ARP_NOTE);
+    scan('MATCH_SETS', MATCH_SETS);
     expect(offenders).toEqual([]);
   });
 });

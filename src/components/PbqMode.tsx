@@ -90,6 +90,11 @@ export function PbqMode({
   };
 
   if (!pbq) {
+    const groups = DOMAINS.map((d) => ({
+      domain: d,
+      items: PBQS.filter((p) => p.domain === d.id),
+    })).filter((g) => g.items.length > 0);
+
     return (
       <div className="study study-pbq">
         <div className="study-intro wide">
@@ -99,20 +104,33 @@ export function PbqMode({
             order the troubleshooting steps, then get graded with a breakdown of exactly what to
             review.
           </p>
-          <div className="pbq-grid">
-            {PBQS.map((p) => {
-              const accent = DOMAINS.find((d) => d.id === p.domain)?.color ?? '#3b82f6';
-              return (
-                <button key={p.id} className="pbq-tile" onClick={() => { setActiveId(p.id); setGen(null); setGenErr(''); }} style={{ '--accent': accent } as React.CSSProperties}>
-                  <span className="pbq-kind">{KIND_LABEL[p.kind]}</span>
-                  <span className="pbq-tile-title">{p.title}</span>
-                  <span className="pbq-tile-domain" style={{ color: accent }}>
-                    {p.domain} {domainName(p.domain)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {groups.map((g, gi) => (
+            <details key={g.domain.id} className="pbq-cat" open={gi === 0}>
+              <summary className="pbq-cat-head" style={{ '--accent': g.domain.color } as React.CSSProperties}>
+                <span className="pbq-cat-dot" style={{ background: g.domain.color }} />
+                <span className="pbq-cat-name">
+                  {g.domain.id} {g.domain.name}
+                </span>
+                <span className="pbq-cat-meta">
+                  {g.domain.weight}% exam &middot; {g.items.length} {g.items.length === 1 ? 'task' : 'tasks'}
+                </span>
+              </summary>
+              <div className="pbq-grid">
+                {g.items.map((p) => {
+                  const accent = g.domain.color;
+                  return (
+                    <button key={p.id} className="pbq-tile" onClick={() => { setActiveId(p.id); setGen(null); setGenErr(''); }} style={{ '--accent': accent } as React.CSSProperties}>
+                      <span className="pbq-kind">{KIND_LABEL[p.kind]}</span>
+                      <span className="pbq-tile-title">{p.title}</span>
+                      <span className="pbq-tile-domain" style={{ color: accent }}>
+                        {p.domain} {domainName(p.domain)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
+          ))}
         </div>
       </div>
     );
