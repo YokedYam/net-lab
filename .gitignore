@@ -2,3 +2,6 @@ node_modules/
 dist/
 .DS_Store
 *.local
+
+# Local-only working notes (troubleshooting logs, security audit). Not published.
+docs/

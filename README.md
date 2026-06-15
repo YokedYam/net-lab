@@ -3,10 +3,15 @@
 An all-in-one, beginner-friendly CompTIA Network+ (N10-009) study hub built around a tiny,
 dark-mode Cisco Packet Tracer. Place devices, cable them together, and ping: a glowing packet
 hops the path while the event log narrates what every switch, router, and firewall is doing.
-Then quiz yourself, drill flashcards, and work performance-based questions, all in the browser.
+Then walk the OSI model layer by layer, run a troubleshooting scenario, quiz yourself, drill
+flashcards, race a matching game, and work performance-based questions, all in the browser.
 
 Plain language, real-world analogies, and resource jumps throughout so non-technical people can
 ease in. Visuals inspired by Tech With Diego's "Every Networking Concept Explained."
+
+A session timer in the top right tracks how long you have studied (start it when you sit down;
+it resets on a fresh visit), the top tabs hide away when you want a cleaner screen, and the
+whole layout scales from a wide Mac display down to a phone.
 
 **Live:** https://black-plant-0cfd8ca10.7.azurestaticapps.net
 
@@ -16,18 +21,30 @@ ease in. Visuals inspired by Tech With Diego's "Every Networking Concept Explain
   idea, then make you do it on the real canvas. The screen dims to a light wash (not a blackout),
   a coach bubble points at the exact control you need, and the step only advances once you have
   actually done it (the app checks live network state, not a "Next" click). Each passed check
-  fires a green celebration. Six missions, rising in difficulty, grouped by category on the home
+  fires a green celebration. Ten missions, rising in difficulty, grouped by category on the home
   screen:
-  - **Fundamentals** — *Build your first network* (place, cable, ping) and *Configure IP
+  - **Fundamentals**: *Build your first network* (place, cable, ping) and *Configure IP
     addresses by hand* (static IP/mask/gateway, then break it on purpose and fix it).
-  - **Subnetting** — *Reading the subnet mask*: two hosts that talk on a /24, then the same two
+  - **Subnetting**: *Reading the subnet mask*: two hosts that talk on a /24, then the same two
     hosts cut off from each other the instant you tighten the mask to /26. The mask, not the
     cable, defines the subnet.
-  - **Topology & Routing** — *Topologies and redundancy* (build a star, find its single point of
+  - **Topology & Routing**: *Topologies and redundancy* (build a star, find its single point of
     failure, add a redundant link, meet STP) and *Routing between two subnets* (a router joining
     two /24s, the default gateway, a cross-subnet ping).
-  - **Protocols** — *The TCP three-way handshake*: an animated walkthrough of SYN / SYN-ACK / ACK
-    on the canvas, the data transfer, and the four-way FIN close, ending on TCP vs UDP.
+  - **Protocols**: *Ports and protocols*, *DHCP: how a device gets an IP*, *DNS: turning a name
+    into an IP*, *The TCP three-way handshake* (an animated SYN / SYN-ACK / ACK walkthrough, the
+    data transfer, and the four-way FIN close), and *TLS: how HTTPS gets encrypted*.
+- **OSI Model** walks all seven layers as two side-by-side towers, a sender and a receiver. Hit
+  play and a packet travels down the sender's stack, picking up a header at each layer
+  (encapsulation: Data, then a port, then an IP, then a MAC and trailer, then bits), crosses the
+  wire, and climbs the receiver's stack shedding each header (de-encapsulation) until it is plain
+  data again. Step forward and back at your own pace, see how the seven OSI layers fold into the
+  four TCP/IP groups, learn the classic mnemonics, and jump straight to the matching PBQs to
+  practice it.
+- **Troubleshoot** runs the official CompTIA seven-step methodology (identify, theory, test,
+  plan, implement, verify, document) as a clickable scenario, alongside a quick reference for the
+  eight CLI tools you are tested on (ping, ipconfig/ip, nslookup/dig, traceroute/tracert, arp,
+  and friends) plus a simulated traceroute and ARP table so you can read real output.
 - **Visual Lab** has two sub-modes:
   - **Build** is a free sandbox: place, cable, inspect, and ping. Scroll to zoom, drag the
     background to pan.
@@ -41,10 +58,16 @@ ease in. Visuals inspired by Tech With Diego's "Every Networking Concept Explain
   the matching Learn demo so you can fix the gap, then keep going.
 - **Flashcards** are 67 pre-made cards focused on the highest-yield and most commonly confused
   topics, with 3D flip, self-rating, and a link to the related demo.
-- **PBQs** are 9 performance-based questions in four exam-like formats: match (port to protocol),
-  categorize (sort devices or terms into buckets), subnet (calculate addressing), and order
-  (sequence troubleshooting steps). Each is graded deterministically in the browser with
-  per-item feedback, a generated insight on submit, and resource links.
+- **Match** is a Quizlet-style timed matching game across 5 curated sets (Ports, OSI layers,
+  Protocols, Tools, Addressing) plus a mixed set, 45 pairs in all. Tap a term, tap its match, and
+  the board clears as you go. It times each round and tracks your misses, so you can race your own
+  best run. Every pair mirrors the flashcards, so the two modes reinforce each other.
+- **PBQs** are 19 performance-based questions grouped by exam domain (1.0 through 5.0) so the
+  screen stays uncrowded, in six exam-like formats: match (port to protocol), categorize (sort
+  devices or terms into buckets), subnet (calculate addressing), order (sequence troubleshooting
+  steps), recall (fill in the key facts), and teach-back (explain it in your own words). Each is
+  graded deterministically in the browser with per-item feedback, a generated insight on submit,
+  and resource links.
 
 ## AI practice (button-triggered, never automatic)
 
@@ -72,9 +95,9 @@ npm run test:watch
 ```
 
 Coverage includes the subnet and IP math (`study.test.ts`) plus content integrity for the quiz,
-flashcards, and PBQs (`content.test.ts`): valid answer indices, every resource link points to a
-real demo, PBQ answers are internally consistent, and a regression guard that keeps em dashes out
-of all user-facing copy.
+flashcards, PBQs, OSI data, troubleshooting steps, and matching sets (`content.test.ts`): valid
+answer indices, every resource link points to a real demo, PBQ answers are internally consistent,
+and a regression guard that keeps em dashes out of all user-facing copy.
 
 ## Deploy
 
