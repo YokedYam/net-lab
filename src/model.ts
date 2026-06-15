@@ -153,7 +153,7 @@ export function effectiveAddr(d: Device, net: NetInfo): EffAddr | null {
 }
 
 // Same broadcast domain per a host's own mask: how a host decides "local vs
-// route to the gateway". Uses the source's mask on purpose — that's the bug
+// route to the gateway". Uses the source's mask on purpose, which is the bug
 // when someone fat-fingers a /16 onto a /24 network.
 export function sameSubnet(a: EffAddr, b: EffAddr, useMask: 'a' | 'b' = 'a'): boolean {
   const ai = ipToInt(a.ip);
@@ -407,7 +407,7 @@ export function planPing(
   } else if (local) {
     // Source believes the destination is on its own subnet (by its own mask).
     if (pathHasRouter)
-      return fail(`${src.name} thinks ${dstIp} is local — ${dstIp} matches its own subnet ${netLabel(srcEff)} — so it ARPs for it directly instead of using the gateway. But ${dst.name} is across a router, so no ARP reply ever comes. Request times out. Fix: correct ${src.name}'s subnet mask.`, 'error');
+      return fail(`${src.name} thinks ${dstIp} is local. ${dstIp} matches its own subnet ${netLabel(srcEff)}, so it ARPs for it directly instead of using the gateway. But ${dst.name} is across a router, so no ARP reply ever comes. Request times out. Fix: correct ${src.name}'s subnet mask.`, 'error');
     if (!dstSeesLocal)
       return fail(`${src.name} sent the frame straight to ${dst.name} (same wire). But ${dst.name}'s mask says ${srcEff.ip} is on a different subnet, so its reply goes to ITS gateway and never comes back. The two masks disagree. Line up the subnet masks.`, 'error');
     put(0, `${src.name}: ${dstIp} is on my subnet (${netLabel(srcEff)}). ARP for its MAC, then send the frame directly.`);

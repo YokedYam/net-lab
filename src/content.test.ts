@@ -154,4 +154,20 @@ describe('Humanizer voice regression guard', () => {
     scan('MATCH_SETS', MATCH_SETS);
     expect(offenders).toEqual([]);
   });
+
+  it('no em dashes (\\u2014) anywhere in the src tree (components, model, helpers)', () => {
+    const files = import.meta.glob('./**/*.{ts,tsx}', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    }) as Record<string, string>;
+    const offenders: string[] = [];
+    for (const [path, source] of Object.entries(files)) {
+      if (path.endsWith('content.test.ts')) continue;
+      source.split('\n').forEach((line, i) => {
+        if (line.includes('\u2014')) offenders.push(`${path}:${i + 1}: ${line.trim()}`);
+      });
+    }
+    expect(offenders).toEqual([]);
+  });
 });

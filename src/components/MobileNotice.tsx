@@ -64,7 +64,7 @@ export function DesktopOnlyNotice({ section }: { section: string }) {
         <p>{c.body}</p>
         <p className="desktop-only-tip">
           On the go? Use <strong>Quiz</strong>, <strong>Flashcards</strong>, <strong>Match</strong>,{' '}
-          <strong>PBQs</strong>, <strong>OSI Model</strong>, or <strong>Troubleshoot</strong> — they
+          <strong>PBQs</strong>, <strong>OSI Model</strong>, or <strong>Troubleshoot</strong>. They
           are all built to work on a phone.
         </p>
       </div>
