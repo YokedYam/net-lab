@@ -859,7 +859,7 @@ export default function App() {
               href="https://johnnynguyen.cloud"
               target="_blank"
               rel="noopener noreferrer"
-              title="Built by Johnny Nguyen — see more at johnnynguyen.cloud"
+              title="Built by Johnny Nguyen - see more at johnnynguyen.cloud"
             >
               built by Johnny Nguyen ↗
             </a>

@@ -1,8 +1,11 @@
 import type { ConceptId, DomainId } from './study';
 
+export type QuizDifficulty = 'easy' | 'medium';
+
 export interface QuizQuestion {
   id: string;
   domain: DomainId;
+  difficulty?: QuizDifficulty;
   topic: string;
   conceptId?: ConceptId; // jumps to the matching Learn demo on a wrong answer
   resourceLabel?: string; // overrides the demo button label
@@ -13,9 +16,679 @@ export interface QuizQuestion {
   ai?: boolean; // true for questions generated at runtime by the AI button
 }
 
+type QuizQuestionDraft = Omit<QuizQuestion, 'difficulty'> & { difficulty?: QuizDifficulty };
+
+const asDifficulty =
+  (difficulty: QuizDifficulty) =>
+  (q: QuizQuestionDraft): QuizQuestion => ({ difficulty, ...q });
+
+// Easy mode is the warm-up bank: definitions, true-or-false checks, and simple
+// concept anchors. These are meant to build recall before scenario practice.
+export const EASY_QUIZ: QuizQuestion[] = (
+  [
+    {
+      id: 'easy-osi-1',
+      domain: '1.0',
+      topic: 'OSI model',
+      conceptId: 'ip',
+      question: 'Which OSI layer is responsible for IP addressing and routing?',
+      choices: ['Layer 1: Physical', 'Layer 2: Data Link', 'Layer 3: Network', 'Layer 4: Transport'],
+      answer: 2,
+      explanation:
+        'Layer 3 is the Network layer. It uses IP addresses and routers to move traffic between networks. If the question says routing, think Layer 3.',
+    },
+    {
+      id: 'easy-osi-2',
+      domain: '1.0',
+      topic: 'OSI model',
+      conceptId: 'mac',
+      question: 'True or false: MAC addresses are used at Layer 2 for local network delivery.',
+      choices: ['True', 'False'],
+      answer: 0,
+      explanation:
+        'True. MAC addresses live at Layer 2. They matter on the local link, like from your laptop to the switch or from a router to the next hop.',
+    },
+    {
+      id: 'easy-osi-3',
+      domain: '1.0',
+      topic: 'OSI model',
+      conceptId: 'tcp',
+      question: 'Which OSI layer uses TCP and UDP port numbers?',
+      choices: ['Layer 2: Data Link', 'Layer 3: Network', 'Layer 4: Transport', 'Layer 7: Application'],
+      answer: 2,
+      explanation:
+        'Layer 4 is the Transport layer. TCP and UDP use port numbers so the traffic reaches the right app on the host.',
+    },
+    {
+      id: 'easy-tcpudp-1',
+      domain: '1.0',
+      topic: 'TCP vs UDP',
+      conceptId: 'tcp',
+      question: 'Which transport protocol is connection-oriented and uses acknowledgments?',
+      choices: ['TCP', 'UDP', 'ICMP', 'ARP'],
+      answer: 0,
+      explanation:
+        'TCP is the reliable one. It sets up a connection, tracks sequence numbers, and retransmits missing data.',
+    },
+    {
+      id: 'easy-tcpudp-2',
+      domain: '1.0',
+      topic: 'TCP vs UDP',
+      conceptId: 'udp',
+      question: 'True or false: UDP is often used for voice, video, and gaming because low delay matters more than retransmitting old packets.',
+      choices: ['True', 'False'],
+      answer: 0,
+      explanation:
+        'True. UDP does not wait around for acknowledgments. For real-time traffic, late data is usually worse than missing data.',
+    },
+    {
+      id: 'easy-dns-1',
+      domain: '1.0',
+      topic: 'DNS',
+      conceptId: 'dns',
+      question: 'What does DNS do?',
+      choices: ['Turns names into IP addresses', 'Hands out IP leases', 'Encrypts Wi-Fi', 'Blocks switching loops'],
+      answer: 0,
+      explanation:
+        'DNS turns a name like google.com into an IP address. If an IP works but a name fails, DNS is the first thing to check.',
+    },
+    {
+      id: 'easy-dns-2',
+      domain: '1.0',
+      topic: 'DNS records',
+      conceptId: 'dns',
+      question: 'Which DNS record maps a hostname to an IPv4 address?',
+      choices: ['A', 'AAAA', 'MX', 'TXT'],
+      answer: 0,
+      explanation:
+        'An A record points a name to an IPv4 address. AAAA points to IPv6, MX points to mail servers, and TXT stores text values.',
+    },
+    {
+      id: 'easy-dns-3',
+      domain: '1.0',
+      topic: 'DNS records',
+      conceptId: 'dns',
+      question: 'Which DNS record maps a hostname to an IPv6 address?',
+      choices: ['A', 'AAAA', 'CNAME', 'PTR'],
+      answer: 1,
+      explanation:
+        'AAAA, pronounced quad-A, maps a name to IPv6. The longer address gets the record with four As.',
+    },
+    {
+      id: 'easy-dhcp-1',
+      domain: '1.0',
+      topic: 'DHCP',
+      conceptId: 'dhcp',
+      question: 'What does DHCP provide to clients?',
+      choices: ['IP settings automatically', 'Encrypted web traffic', 'MAC address lookups', 'Wireless channels'],
+      answer: 0,
+      explanation:
+        'DHCP automatically gives clients IP settings such as address, subnet mask, default gateway, DNS server, and lease time.',
+    },
+    {
+      id: 'easy-dhcp-2',
+      domain: '1.0',
+      topic: 'DHCP',
+      conceptId: 'dhcp',
+      question: 'What is the DHCP four-step process called?',
+      choices: ['DORA', 'CIA', 'AAA', 'STP'],
+      answer: 0,
+      explanation:
+        'DORA means Discover, Offer, Request, Acknowledge. It is the basic DHCP lease flow.',
+    },
+    {
+      id: 'easy-ip-1',
+      domain: '1.0',
+      topic: 'Private IP ranges',
+      conceptId: 'ip',
+      question: 'Which range is private under RFC 1918?',
+      choices: ['10.0.0.0/8', '8.8.8.0/24', '172.32.0.0/16', '169.254.0.0/16'],
+      answer: 0,
+      explanation:
+        '10.0.0.0/8 is private. The three private ranges are 10.x.x.x, 172.16.x.x through 172.31.x.x, and 192.168.x.x.',
+    },
+    {
+      id: 'easy-ip-2',
+      domain: '1.0',
+      topic: 'Private IP ranges',
+      conceptId: 'ip',
+      question: 'True or false: 172.32.5.10 is a private IPv4 address.',
+      choices: ['True', 'False'],
+      answer: 1,
+      explanation:
+        'False. Only 172.16.0.0 through 172.31.255.255 is private. 172.32.x.x is outside the private range.',
+    },
+    {
+      id: 'easy-apipa-1',
+      domain: '5.0',
+      topic: 'APIPA',
+      conceptId: 'dhcp',
+      question: 'A Windows client has 169.254.20.10. What does that usually mean?',
+      choices: ['DHCP failed', 'DNS failed', 'NAT is working', 'The address is public'],
+      answer: 0,
+      explanation:
+        '169.254.x.x is APIPA. The client self-assigned it because it could not get an address from DHCP.',
+    },
+    {
+      id: 'easy-nat-1',
+      domain: '1.0',
+      topic: 'NAT / PAT',
+      conceptId: 'router',
+      resourceLabel: 'Router demo',
+      question: 'What does NAT do?',
+      choices: ['Translates private addresses to public addresses', 'Assigns VLAN tags', 'Synchronizes clocks', 'Finds MAC addresses'],
+      answer: 0,
+      explanation:
+        'NAT translates internal private addresses to public addresses so private hosts can reach the internet.',
+    },
+    {
+      id: 'easy-pat-1',
+      domain: '1.0',
+      topic: 'NAT / PAT',
+      conceptId: 'router',
+      resourceLabel: 'Router demo',
+      question: 'True or false: PAT lets many inside devices share one public IP by tracking port numbers.',
+      choices: ['True', 'False'],
+      answer: 0,
+      explanation:
+        'True. PAT is NAT overload. It uses port numbers to keep many private sessions mapped to one public address.',
+    },
+    {
+      id: 'easy-arp-1',
+      domain: '1.0',
+      topic: 'ARP',
+      conceptId: 'mac',
+      question: 'What does ARP resolve?',
+      choices: ['IP address to MAC address', 'Hostname to IP address', 'Port to protocol', 'SSID to channel'],
+      answer: 0,
+      explanation:
+        'ARP maps an IPv4 address to the MAC address needed for local delivery. DNS maps names to IPs.',
+    },
+    {
+      id: 'easy-gateway-1',
+      domain: '1.0',
+      topic: 'Default gateway',
+      conceptId: 'gateway',
+      question: 'What is a default gateway?',
+      choices: ['The router a host uses to reach other networks', 'The DNS server for a domain', 'The switch MAC table', 'The first usable DHCP lease only'],
+      answer: 0,
+      explanation:
+        'The default gateway is the local router address a host sends traffic to when the destination is outside its own subnet.',
+    },
+    {
+      id: 'easy-subnet-1',
+      domain: '1.0',
+      topic: 'Subnetting',
+      conceptId: 'subnet',
+      question: 'How many usable host addresses are in a /24 subnet?',
+      choices: ['254', '256', '255', '128'],
+      answer: 0,
+      explanation:
+        '/24 leaves 8 host bits. 2^8 is 256 total addresses, minus network and broadcast gives 254 usable hosts.',
+    },
+    {
+      id: 'easy-subnet-2',
+      domain: '1.0',
+      topic: 'Subnetting',
+      conceptId: 'subnet',
+      question: 'True or false: the network address and broadcast address can be assigned to hosts.',
+      choices: ['True', 'False'],
+      answer: 1,
+      explanation:
+        'False. Those two addresses are reserved. That is why usable host math subtracts 2.',
+    },
+    {
+      id: 'easy-icmp-1',
+      domain: '5.0',
+      topic: 'Tools',
+      conceptId: 'icmp',
+      question: 'Which protocol does ping use to test reachability?',
+      choices: ['ICMP', 'SMTP', 'SNMP', 'LDAP'],
+      answer: 0,
+      explanation:
+        'ping uses ICMP echo request and echo reply. It is a reachability test, not a port test.',
+    },
+    {
+      id: 'easy-switch-1',
+      domain: '2.0',
+      topic: 'Switching',
+      conceptId: 'switch',
+      question: 'What does a switch primarily use to forward frames?',
+      choices: ['MAC addresses', 'IP routes', 'DNS records', 'Port numbers'],
+      answer: 0,
+      explanation:
+        'Switches forward Layer 2 frames using MAC addresses in a MAC or CAM table.',
+    },
+    {
+      id: 'easy-vlan-1',
+      domain: '2.0',
+      topic: 'VLANs',
+      conceptId: 'switch',
+      resourceLabel: 'Switch demo',
+      question: 'What does a VLAN create?',
+      choices: ['A separate broadcast domain', 'A faster DNS lookup', 'A public IP address', 'A wireless password'],
+      answer: 0,
+      explanation:
+        'A VLAN creates a separate broadcast domain on shared switch hardware. It is a logical split, not a new physical switch.',
+    },
+    {
+      id: 'easy-trunk-1',
+      domain: '2.0',
+      topic: 'VLANs',
+      conceptId: 'switch',
+      resourceLabel: 'Switch demo',
+      question: 'Which standard tags VLAN traffic across a trunk link?',
+      choices: ['802.1Q', '802.1X', '802.11ax', '802.3af'],
+      answer: 0,
+      explanation:
+        '802.1Q is VLAN tagging. 802.1X is authentication, 802.11 is Wi-Fi, and 802.3af is PoE.',
+    },
+    {
+      id: 'easy-stp-1',
+      domain: '2.0',
+      topic: 'Switching loops',
+      conceptId: 'switch',
+      resourceLabel: 'Switch demo',
+      question: 'What problem does STP prevent?',
+      choices: ['Switching loops and broadcast storms', 'Bad DNS records', 'Weak Wi-Fi encryption', 'Expired DHCP leases'],
+      answer: 0,
+      explanation:
+        'STP blocks redundant Layer 2 paths so frames do not loop forever. The exam often ties STP to broadcast storms.',
+    },
+    {
+      id: 'easy-stp-2',
+      domain: '2.0',
+      topic: 'Switching loops',
+      conceptId: 'switch',
+      resourceLabel: 'Switch demo',
+      question: 'Which STP version converges faster than classic STP?',
+      choices: ['RSTP', 'RIP', 'RADIUS', 'RDP'],
+      answer: 0,
+      explanation:
+        'RSTP means Rapid Spanning Tree Protocol. Rapid is the hint: it converges much faster than classic STP.',
+    },
+    {
+      id: 'easy-poe-1',
+      domain: '2.0',
+      topic: 'PoE',
+      question: 'What does PoE allow an Ethernet cable to carry?',
+      choices: ['Data and electrical power', 'Fiber and copper at once', 'Two SSIDs only', 'Only voice traffic'],
+      answer: 0,
+      explanation:
+        'Power over Ethernet carries data and power on the same cable. Access points, cameras, and VoIP phones use it a lot.',
+    },
+    {
+      id: 'easy-fiber-1',
+      domain: '2.0',
+      topic: 'Fiber',
+      question: 'Which fiber type is best for very long distances?',
+      choices: ['Single-mode fiber', 'Multimode fiber', 'Cat 6a', 'Coax'],
+      answer: 0,
+      explanation:
+        'Single-mode fiber uses a narrow core and laser light for long distance runs. Multimode is usually shorter range.',
+    },
+    {
+      id: 'easy-cable-1',
+      domain: '2.0',
+      topic: 'Cabling',
+      question: 'What is the usual maximum distance for copper Ethernet runs?',
+      choices: ['100 meters', '10 meters', '1 kilometer', '20 kilometers'],
+      answer: 0,
+      explanation:
+        'Copper Ethernet is usually limited to 100 meters. Longer runs push you toward fiber.',
+    },
+    {
+      id: 'easy-wifi-1',
+      domain: '2.0',
+      topic: 'Wireless',
+      question: 'Which Wi-Fi band usually has the best range but the most congestion?',
+      choices: ['2.4 GHz', '5 GHz', '6 GHz', '60 GHz'],
+      answer: 0,
+      explanation:
+        '2.4 GHz travels farther and goes through walls better, but it is crowded and has fewer clean channels.',
+    },
+    {
+      id: 'easy-wifi-2',
+      domain: '2.0',
+      topic: 'Wireless',
+      question: 'Which 2.4 GHz Wi-Fi channels are the common non-overlapping choices?',
+      choices: ['1, 6, and 11', '2, 4, and 8', '10, 20, and 30', '36, 40, and 44'],
+      answer: 0,
+      explanation:
+        'In 2.4 GHz, the clean non-overlapping channel set is 1, 6, and 11. That one is worth memorizing cold.',
+    },
+    {
+      id: 'easy-wifi-3',
+      domain: '2.0',
+      topic: 'Wireless',
+      question: 'Which Wi-Fi standard is also called Wi-Fi 6?',
+      choices: ['802.11ax', '802.11ac', '802.11n', '802.11g'],
+      answer: 0,
+      explanation:
+        '802.11ax is Wi-Fi 6. 802.11ac is Wi-Fi 5, and 802.11n is Wi-Fi 4.',
+    },
+    {
+      id: 'easy-routing-1',
+      domain: '2.0',
+      topic: 'Routing protocols',
+      conceptId: 'ospf',
+      question: 'Which routing protocol is a link-state interior gateway protocol?',
+      choices: ['OSPF', 'BGP', 'RIP', 'ARP'],
+      answer: 0,
+      explanation:
+        'OSPF is link-state and used inside an organization. It chooses paths based on cost.',
+    },
+    {
+      id: 'easy-routing-2',
+      domain: '2.0',
+      topic: 'Routing protocols',
+      conceptId: 'bgp',
+      question: 'Which routing protocol connects autonomous systems on the internet?',
+      choices: ['BGP', 'OSPF', 'EIGRP', 'STP'],
+      answer: 0,
+      explanation:
+        'BGP is the exterior routing protocol used between autonomous systems. It is the routing protocol of the internet.',
+    },
+    {
+      id: 'easy-sdwan-1',
+      domain: '2.0',
+      topic: 'SD-WAN',
+      conceptId: 'routes',
+      question: 'What is SD-WAN mainly used for?',
+      choices: ['Centrally managing WAN paths across links like MPLS, broadband, and LTE', 'Assigning DHCP leases on a LAN', 'Replacing DNS records', 'Encrypting a Wi-Fi password'],
+      answer: 0,
+      explanation:
+        'SD-WAN uses software control to steer WAN traffic across multiple underlay links. Think branch offices picking the best path automatically.',
+    },
+    {
+      id: 'easy-snmp-1',
+      domain: '3.0',
+      topic: 'Monitoring',
+      question: 'What is SNMP used for?',
+      choices: ['Monitoring and managing network devices', 'Sending email between servers', 'Resolving hostnames', 'Authenticating Wi-Fi users'],
+      answer: 0,
+      explanation:
+        'SNMP is for monitoring and managing devices like switches, routers, and firewalls. SNMPv3 is the secure version.',
+    },
+    {
+      id: 'easy-syslog-1',
+      domain: '3.0',
+      topic: 'Logging',
+      question: 'True or false: syslog severity 0 is more severe than severity 7.',
+      choices: ['True', 'False'],
+      answer: 0,
+      explanation:
+        'True. Syslog runs from 0 Emergency to 7 Debug. Lower number means more severe.',
+    },
+    {
+      id: 'easy-syslog-2',
+      domain: '3.0',
+      topic: 'Logging',
+      question: 'What is syslog mainly for?',
+      choices: ['Collecting event messages with severity levels', 'Tracking which admin typed every command', 'Assigning IP addresses', 'Finding wireless channels'],
+      answer: 0,
+      explanation:
+        'Syslog collects event messages and severity levels. For who typed which config command, think TACACS+ accounting or change logs.',
+    },
+    {
+      id: 'easy-ntp-1',
+      domain: '3.0',
+      topic: 'Network services',
+      question: 'What does NTP do?',
+      choices: ['Synchronizes device clocks', 'Translates IP addresses', 'Blocks malware inline', 'Tags VLANs'],
+      answer: 0,
+      explanation:
+        'NTP keeps clocks synced. That matters because troubleshooting and incident logs are useless when every device has a different time.',
+    },
+    {
+      id: 'easy-qos-1',
+      domain: '3.0',
+      topic: 'QoS',
+      conceptId: 'udp',
+      resourceLabel: 'UDP demo',
+      question: 'What does QoS help with?',
+      choices: ['Prioritizing time-sensitive traffic like voice', 'Creating private IPv4 ranges', 'Preventing ARP lookups', 'Replacing a firewall'],
+      answer: 0,
+      explanation:
+        'QoS prioritizes traffic that is sensitive to delay, like voice and video, so big downloads do not ruin calls.',
+    },
+    {
+      id: 'easy-dr-1',
+      domain: '3.0',
+      topic: 'Disaster recovery',
+      question: 'Which metric means how long you can be down before recovery must be complete?',
+      choices: ['RTO', 'RPO', 'MTBF', 'MTTR'],
+      answer: 0,
+      explanation:
+        'RTO is Recovery Time Objective. It answers how quickly service must be restored.',
+    },
+    {
+      id: 'easy-dr-2',
+      domain: '3.0',
+      topic: 'Disaster recovery',
+      question: 'Which metric means how much data loss is acceptable, measured in time?',
+      choices: ['RPO', 'RTO', 'MTBF', 'MTU'],
+      answer: 0,
+      explanation:
+        'RPO is Recovery Point Objective. It answers how far back you can restore without losing too much data.',
+    },
+    {
+      id: 'easy-jumbo-1',
+      domain: '3.0',
+      topic: 'Jumbo frames',
+      question: 'What are jumbo frames?',
+      choices: ['Ethernet frames with an MTU around 9000 bytes', 'Tiny DNS packets', 'Wireless channels above 6 GHz', 'Encrypted syslog messages'],
+      answer: 0,
+      explanation:
+        'Jumbo frames raise MTU from the usual 1500 bytes to around 9000. They show up in datacenter and storage network contexts.',
+    },
+    {
+      id: 'easy-fhrp-1',
+      domain: '3.0',
+      topic: 'High availability',
+      conceptId: 'gateway',
+      resourceLabel: 'Gateway demo',
+      question: 'What does FHRP provide?',
+      choices: ['A redundant default gateway using a shared virtual IP', 'Encrypted DNS queries', 'A faster DHCP lease', 'A new Wi-Fi band'],
+      answer: 0,
+      explanation:
+        'First Hop Redundancy Protocols let routers share a virtual gateway IP so hosts keep working if one router fails.',
+    },
+    {
+      id: 'easy-fhrp-2',
+      domain: '3.0',
+      topic: 'High availability',
+      conceptId: 'gateway',
+      resourceLabel: 'Gateway demo',
+      question: 'Which FHRP is Cisco proprietary and uses active/standby routers?',
+      choices: ['HSRP', 'VRRP', 'GLBP', 'OSPF'],
+      answer: 0,
+      explanation:
+        'HSRP is Cisco proprietary and uses active/standby. VRRP is the open standard. GLBP is Cisco and adds load balancing.',
+    },
+    {
+      id: 'easy-cia-1',
+      domain: '4.0',
+      topic: 'Security concepts',
+      question: 'What does the C in CIA stand for?',
+      choices: ['Confidentiality', 'Control', 'Credential', 'Certificate'],
+      answer: 0,
+      explanation:
+        'CIA means Confidentiality, Integrity, and Availability. Confidentiality is keeping data secret.',
+    },
+    {
+      id: 'easy-aaa-1',
+      domain: '4.0',
+      topic: 'Authentication',
+      question: 'What does AAA stand for?',
+      choices: ['Authentication, Authorization, Accounting', 'Access, Addressing, Auditing', 'Availability, Accuracy, Assurance', 'Allow, Alert, Archive'],
+      answer: 0,
+      explanation:
+        'AAA is Authentication, Authorization, and Accounting. Who are you, what are you allowed to do, and what did you do?',
+    },
+    {
+      id: 'easy-tacacs-1',
+      domain: '4.0',
+      topic: 'Authentication',
+      question: 'Which AAA protocol is preferred for network device administration and encrypts the full packet?',
+      choices: ['TACACS+', 'RADIUS', 'SNMPv2c', 'LDAP only'],
+      answer: 0,
+      explanation:
+        'TACACS+ is commonly used for device administration. It separates AAA functions and encrypts the full packet.',
+    },
+    {
+      id: 'easy-radius-1',
+      domain: '4.0',
+      topic: 'Authentication',
+      question: 'Which AAA protocol is commonly used with 802.1X for network access?',
+      choices: ['RADIUS', 'TACACS+', 'BGP', 'NTP'],
+      answer: 0,
+      explanation:
+        'RADIUS is commonly used for network access authentication, especially with 802.1X wired or wireless access.',
+    },
+    {
+      id: 'easy-vpn-1',
+      domain: '4.0',
+      topic: 'VPN',
+      conceptId: 'vpn',
+      question: 'True or false: split tunneling sends only corporate traffic through the VPN.',
+      choices: ['True', 'False'],
+      answer: 0,
+      explanation:
+        'True. Split tunneling sends corporate-bound traffic through the VPN while normal internet browsing uses the local connection.',
+    },
+    {
+      id: 'easy-vpn-2',
+      domain: '4.0',
+      topic: 'VPN',
+      conceptId: 'vpn',
+      question: 'What does full tunneling do?',
+      choices: ['Routes all traffic through the VPN', 'Routes no traffic through the VPN', 'Only encrypts DNS', 'Only connects switches'],
+      answer: 0,
+      explanation:
+        'Full tunneling sends everything through the VPN, including normal internet browsing. It gives more central control but can add load and latency.',
+    },
+    {
+      id: 'easy-8021x-1',
+      domain: '4.0',
+      topic: 'Authentication',
+      question: 'What does 802.1X provide?',
+      choices: ['Port-based network access control', 'VLAN trunk tagging', 'Power over Ethernet', 'Wi-Fi channel bonding'],
+      answer: 0,
+      explanation:
+        '802.1X makes a device or user authenticate before the switch port or Wi-Fi access opens up.',
+    },
+    {
+      id: 'easy-idsips-1',
+      domain: '4.0',
+      topic: 'Security devices',
+      conceptId: 'firewall',
+      resourceLabel: 'Firewall demo',
+      question: 'Which system can actively block malicious traffic inline?',
+      choices: ['IPS', 'IDS', 'Syslog', 'NTP'],
+      answer: 0,
+      explanation:
+        'IPS means Intrusion Prevention System. Prevention blocks. IDS detects and alerts.',
+    },
+    {
+      id: 'easy-honeynet-1',
+      domain: '4.0',
+      topic: 'Security concepts',
+      question: 'What is a honeynet?',
+      choices: ['A group of decoy systems used to attract and study attackers', 'A faster DNS resolver', 'A private IPv6 range', 'A Wi-Fi mesh standard'],
+      answer: 0,
+      explanation:
+        'A honeynet is a network of decoy systems. It is meant to lure attackers away from real assets and reveal their behavior.',
+    },
+    {
+      id: 'easy-method-1',
+      domain: '5.0',
+      topic: 'Troubleshooting methodology',
+      question: 'What is the first step in the CompTIA troubleshooting methodology?',
+      choices: ['Identify the problem', 'Implement a fix', 'Document findings', 'Escalate immediately'],
+      answer: 0,
+      explanation:
+        'Start by identifying the problem: gather information, question users, and find out what changed. Do not jump straight to a fix.',
+    },
+    {
+      id: 'easy-loopback-1',
+      domain: '5.0',
+      topic: 'Tools',
+      conceptId: 'icmp',
+      question: 'What does pinging 127.0.0.1 test?',
+      choices: ['The local TCP/IP stack', 'The default gateway', 'The DNS server', 'The internet path'],
+      answer: 0,
+      explanation:
+        '127.0.0.1 is loopback. It tests your own TCP/IP stack without touching the network.',
+    },
+    {
+      id: 'easy-dns-trouble-1',
+      domain: '5.0',
+      topic: 'Troubleshooting',
+      conceptId: 'dns',
+      question: 'A user can ping 8.8.8.8 but cannot ping google.com. What is the likely issue?',
+      choices: ['DNS', 'Bad cable', 'Loopback failure', 'Wrong duplex only'],
+      answer: 0,
+      explanation:
+        'If an IP works but a name fails, routing is probably working and DNS is the likely issue.',
+    },
+    {
+      id: 'easy-tool-1',
+      domain: '5.0',
+      topic: 'Tools',
+      question: 'Which command shows IP address, subnet mask, gateway, and DNS settings on Windows?',
+      choices: ['ipconfig', 'netstat', 'tracert', 'arp -a'],
+      answer: 0,
+      explanation:
+        'ipconfig shows Windows IP configuration. Use ipconfig /all when you need the full detail.',
+    },
+    {
+      id: 'easy-tool-2',
+      domain: '5.0',
+      topic: 'Tools',
+      question: 'Which command shows active network connections and listening ports?',
+      choices: ['netstat', 'nslookup', 'arp -a', 'ipconfig /release'],
+      answer: 0,
+      explanation:
+        'netstat shows active connections and listening ports. It is useful when you need to see what a host is actually talking to.',
+    },
+    {
+      id: 'easy-tool-3',
+      domain: '5.0',
+      topic: 'Tools',
+      question: 'Which tool captures and analyzes packets from the network?',
+      choices: ['tcpdump or Wireshark', 'NTP', 'DHCP', 'RADIUS'],
+      answer: 0,
+      explanation:
+        'tcpdump and Wireshark capture packets. Use them when you need to inspect traffic instead of guessing.',
+    },
+    {
+      id: 'easy-physical-1',
+      domain: '5.0',
+      topic: 'Common issues',
+      question: 'A shorted cable is most likely a problem at which OSI layer?',
+      choices: ['Layer 1: Physical', 'Layer 2: Data Link', 'Layer 3: Network', 'Layer 7: Application'],
+      answer: 0,
+      explanation:
+        'Bad cables, wrong transceivers, bent pins, and link lights are Layer 1 problems. Start physical before chasing software.',
+    },
+    {
+      id: 'easy-duplex-1',
+      domain: '5.0',
+      topic: 'Common issues',
+      question: 'Which issue is associated with late collisions and a slow-but-working Ethernet link?',
+      choices: ['Duplex mismatch', 'DNS typo', 'Wrong MX record', 'Expired certificate only'],
+      answer: 0,
+      explanation:
+        'Late collisions and a slow link point to a duplex mismatch. One side may be half-duplex while the other is full-duplex.',
+    },
+  ] satisfies QuizQuestionDraft[]
+).map(asDifficulty('easy'));
+
 // A practice pool written in the scenario / "BEST answer" style the real
 // Network+ (N10-009) uses. Plain-English explanations, analogies for beginners.
-export const QUIZ: QuizQuestion[] = [
+export const MEDIUM_QUIZ: QuizQuestion[] = (
+  [
   // ---------------- Domain 1.0: Networking Concepts ----------------
   {
     id: 'q-osi-1',
@@ -564,4 +1237,7 @@ export const QUIZ: QuizQuestion[] = [
     explanation:
       'Multicast = one-to-many for a subscribed group (efficient for streaming). Unicast = one-to-one. Broadcast = one-to-all on the subnet. Anycast = one-to-nearest. Picking the right one saves bandwidth.',
   },
-];
+  ] satisfies QuizQuestionDraft[]
+).map(asDifficulty('medium'));
+
+export const QUIZ: QuizQuestion[] = [...EASY_QUIZ, ...MEDIUM_QUIZ];

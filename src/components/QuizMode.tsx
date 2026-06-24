@@ -1,12 +1,36 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { QUIZ } from '../quizData';
-import type { QuizQuestion } from '../quizData';
+import { EASY_QUIZ, MEDIUM_QUIZ } from '../quizData';
+import type { QuizDifficulty, QuizQuestion } from '../quizData';
 import { DOMAINS, domainName } from '../study';
 import type { DomainId } from '../study';
 import { conceptById } from '../concepts';
 import { generateSimilarQuestion } from '../ai';
+import { AcronymHelp, acronymsInText } from './AcronymHelp';
 
 type Filter = DomainId | 'all';
+type DifficultyOption = {
+  id: QuizDifficulty;
+  title: string;
+  eyebrow: string;
+  copy: string;
+};
+
+const DIFFICULTIES: DifficultyOption[] = [
+  {
+    id: 'easy',
+    title: 'Easy',
+    eyebrow: 'Vocab warm-up',
+    copy: 'Definitions, true or false, and quick concept checks. Use this before the scenario pool.',
+  },
+  {
+    id: 'medium',
+    title: 'Medium',
+    eyebrow: 'Scenario practice',
+    copy: 'The existing exam-style bank. Best-answer questions with longer explanations.',
+  },
+];
+
+const bankFor = (difficulty: QuizDifficulty) => (difficulty === 'easy' ? EASY_QUIZ : MEDIUM_QUIZ);
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -18,6 +42,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function QuizMode({ onResource }: { onResource: (conceptId: string) => void }) {
+  const [difficulty, setDifficulty] = useState<QuizDifficulty>('easy');
   const [filter, setFilter] = useState<Filter>('all');
   const [started, setStarted] = useState(false);
   const [queue, setQueue] = useState<QuizQuestion[]>([]);
@@ -31,8 +56,11 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
   const [genErr, setGenErr] = useState('');
 
   const pool = useMemo(
-    () => (filter === 'all' ? QUIZ : QUIZ.filter((q) => q.domain === filter)),
-    [filter]
+    () => {
+      const bank = bankFor(difficulty);
+      return filter === 'all' ? bank : bank.filter((q) => q.domain === filter);
+    },
+    [difficulty, filter]
   );
 
   const start = useCallback(() => {
@@ -48,6 +76,15 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
 
   const q = queue[pos];
   const isRight = picked !== null && q && picked === q.answer;
+  const acronymItems = useMemo(() => {
+    if (!q) return [];
+    return acronymsInText([
+      q.topic,
+      q.question,
+      ...q.choices,
+      ...(picked !== null ? [q.explanation] : []),
+    ]);
+  }, [picked, q]);
 
   const choose = (i: number) => {
     if (picked !== null || !q) return;
@@ -111,17 +148,34 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
         <div className="study-intro">
           <h1>Practice Quiz</h1>
           <p className="study-lead">
-            Exam-style multiple choice. Miss one and the lab points you to the demo that explains it.
-            Keep quizzing or go watch it. The pool reshuffles forever, so drill as long as you like.
+            Start with recall, then move into scenario practice. Miss one and the lab points you to
+            the demo that explains it.
           </p>
+          <div className="quiz-mode-grid" aria-label="Pick a quiz difficulty">
+            {DIFFICULTIES.map((d) => {
+              const bank = bankFor(d.id);
+              return (
+                <button
+                  key={d.id}
+                  className={difficulty === d.id ? 'quiz-mode-card active' : 'quiz-mode-card'}
+                  onClick={() => setDifficulty(d.id)}
+                >
+                  <span className="mode-eyebrow">{d.eyebrow}</span>
+                  <span className="mode-title">{d.title}</span>
+                  <span className="mode-copy">{d.copy}</span>
+                  <span className="mode-count">{bank.length} questions</span>
+                </button>
+              );
+            })}
+          </div>
           <div className="study-filter">
             <span className="study-filter-label">Pick a focus</span>
             <div className="chip-row">
               <button className={filter === 'all' ? 'fchip active' : 'fchip'} onClick={() => setFilter('all')}>
-                All domains · {QUIZ.length} Q
+                All domains · {bankFor(difficulty).length} Q
               </button>
               {DOMAINS.map((d) => {
-                const n = QUIZ.filter((x) => x.domain === d.id).length;
+                const n = bankFor(difficulty).filter((x) => x.domain === d.id).length;
                 return (
                   <button
                     key={d.id}
@@ -149,6 +203,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
   const accuracy = answered ? Math.round((correct / answered) * 100) : 0;
   const linkedConcept = q.conceptId ? conceptById(q.conceptId) : null;
   const missedList = Object.entries(missed).sort((a, b) => b[1] - a[1]);
+  const qDifficulty = q.difficulty ?? 'medium';
 
   return (
     <div className="study study-quiz">
@@ -158,6 +213,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
             {q.domain} {domainName(q.domain)}
           </span>
           <span className="qs-topic">· {q.topic}</span>
+          <span className={`qs-difficulty ${qDifficulty}`}>{qDifficulty}</span>
           {q.ai && <span className="qs-ai">AI generated</span>}
         </div>
         <div className="qs-right">
@@ -173,6 +229,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
 
       <div className="quiz-card">
         <div className="quiz-q">{q.question}</div>
+        <AcronymHelp items={acronymItems} />
         <div className="quiz-choices">
           {q.choices.map((c, i) => {
             let cls = 'quiz-choice';

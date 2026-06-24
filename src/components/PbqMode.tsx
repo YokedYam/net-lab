@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PBQS } from '../pbqData';
+import { PortDrill } from './PortDrill';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { SubnetField } from '../study';
@@ -89,6 +90,18 @@ export function PbqMode({
     setGen(res.value);
   };
 
+  if (activeId === 'port-drill') {
+    return (
+      <PortDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (!pbq) {
     const groups = DOMAINS.map((d) => ({
       domain: d,
@@ -104,6 +117,23 @@ export function PbqMode({
             order the troubleshooting steps, then get graded with a breakdown of exactly what to
             review.
           </p>
+          <div style={{ marginBottom: 8 }}>
+            <span className="study-filter-label">Drills</span>
+            <div className="pbq-grid">
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#3b82f6' } as React.CSSProperties}
+                onClick={() => { setActiveId('port-drill'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">Drill</span>
+                <span className="pbq-tile-title">Port &amp; Protocol Drill</span>
+                <span className="pbq-tile-domain" style={{ color: '#3b82f6' }}>
+                  1.0 Networking Concepts · 16 protocols
+                </span>
+              </button>
+            </div>
+          </div>
+
           {groups.map((g, gi) => (
             <details key={g.domain.id} className="pbq-cat" open={gi === 0}>
               <summary className="pbq-cat-head" style={{ '--accent': g.domain.color } as React.CSSProperties}>

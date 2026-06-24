@@ -73,6 +73,7 @@ export async function generateSimilarQuestion(
     value: {
       id: uid('ai-q'),
       domain: source.domain,
+      difficulty: source.difficulty ?? 'medium',
       topic: typeof raw.topic === 'string' && raw.topic ? raw.topic : source.topic,
       conceptId: source.conceptId,
       resourceLabel: source.resourceLabel,

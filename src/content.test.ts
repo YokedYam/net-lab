@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { QUIZ } from './quizData';
+import { EASY_QUIZ, MEDIUM_QUIZ, QUIZ } from './quizData';
 import { FLASHCARDS } from './flashcardData';
 import { PBQS } from './pbqData';
 import { CONCEPTS } from './concepts';
@@ -22,7 +22,13 @@ function collectStrings(value: unknown, out: string[] = []): string[] {
 
 describe('Quiz bank', () => {
   it('has a non-trivial number of questions', () => {
-    expect(QUIZ.length).toBeGreaterThanOrEqual(20);
+    expect(QUIZ.length).toBeGreaterThanOrEqual(90);
+  });
+  it('has separate easy and medium banks', () => {
+    expect(EASY_QUIZ.length).toBeGreaterThanOrEqual(50);
+    expect(MEDIUM_QUIZ.length).toBeGreaterThanOrEqual(40);
+    expect(EASY_QUIZ.every((q) => q.difficulty === 'easy')).toBe(true);
+    expect(MEDIUM_QUIZ.every((q) => q.difficulty === 'medium')).toBe(true);
   });
   it('has unique ids', () => {
     const ids = QUIZ.map((q) => q.id);
@@ -38,6 +44,7 @@ describe('Quiz bank', () => {
   it('every domain is valid and copy is non-empty', () => {
     for (const q of QUIZ) {
       expect(DOMAIN_IDS.has(q.domain)).toBe(true);
+      expect(['easy', 'medium']).toContain(q.difficulty);
       expect(q.question.trim().length).toBeGreaterThan(0);
       expect(q.explanation.trim().length).toBeGreaterThan(0);
     }

@@ -53,9 +53,9 @@ whole layout scales from a wide Mac display down to a phone.
     Firewall, TLS, VPN, DNS, HTTP, Load balancer). Each demo runs a scripted topology with
     narration plus on-canvas callouts that point things out as they happen, and ends with a
     "Try it yourself" task. Deep-linkable: `?c=ospf`.
-- **Quiz** is an iterable practice bank of 45 scenario, "best answer" questions in the style the
-  real exam uses. Plain-English explanations with analogies. Get one wrong and it points you to
-  the matching Learn demo so you can fix the gap, then keep going.
+- **Quiz** now has two banks: Easy for vocab, definitions, true-or-false checks, and quick concept
+  recall, then Medium for the existing scenario-style "best answer" practice. Get one wrong and it
+  points you to the matching Learn demo so you can fix the gap, then keep going.
 - **Flashcards** are 67 pre-made cards focused on the highest-yield and most commonly confused
   topics, with 3D flip, self-rating, and a link to the related demo.
 - **Match** is a Quizlet-style timed matching game across 5 curated sets (Ports, OSI layers,
