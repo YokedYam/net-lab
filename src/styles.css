@@ -2808,6 +2808,221 @@ svg.scene text {
   white-space: nowrap;
 }
 
+/* ---------- CIDR Sizing Drill ---------- */
+.cidr-drill-card {
+  max-width: 860px;
+}
+
+.cidr-scenario {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: #081b20;
+  border: 1px solid #1e5963;
+  border-left: 3px solid #14b8a6;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  color: #c9f4ee;
+}
+
+.cidr-scenario-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #5eead4;
+}
+
+.cidr-scenario strong {
+  font-size: 18px;
+  color: #f0fdfa;
+}
+
+.cidr-scenario span:last-child {
+  font-size: 13px;
+  color: #8edbd0;
+}
+
+.subnet-review-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  border-radius: 12px;
+  color: #fde68a;
+  font-size: 13px;
+}
+
+.subnet-review-prompt .big-btn {
+  flex: none;
+}
+
+/* ---------- Subnetting Guide ---------- */
+.subnet-guide-card {
+  max-width: 980px;
+}
+
+.subnet-credit {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.24);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 14px 0 18px;
+}
+
+.subnet-credit span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #facc15;
+}
+
+.subnet-credit a {
+  color: #fde68a;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.subnet-credit a:hover {
+  text-decoration: underline;
+}
+
+.guide-section {
+  margin-top: 18px;
+}
+
+.guide-section h3 {
+  margin: 0 0 10px;
+  color: #e8eefb;
+  font-size: 16px;
+}
+
+.subnet-steps {
+  margin: 0;
+  padding-left: 22px;
+  color: #c9d6ee;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.subnet-guide-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #243355;
+  border-radius: 12px;
+}
+
+.subnet-guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+  background: #0a0f1c;
+}
+
+.subnet-guide-table th,
+.subnet-guide-table td {
+  border-bottom: 1px solid #1c2842;
+  padding: 11px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.subnet-guide-table th {
+  color: #8b9cbd;
+  background: #101a30;
+  font-weight: 700;
+}
+
+.subnet-guide-table td {
+  color: #dbe4f3;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+.guide-example {
+  margin-top: 20px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-left: 3px solid #facc15;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.guide-example-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.guide-example-head span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #facc15;
+}
+
+.guide-example-head strong {
+  color: #f8fafc;
+  font-size: 22px;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+.guide-example-grid,
+.class-example-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.guide-example-grid > div,
+.class-example-grid > div {
+  background: #0a0f1c;
+  border: 1px solid #243355;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.guide-example-grid span,
+.class-example-grid span {
+  display: block;
+  color: #8b9cbd;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.guide-example-grid b,
+.class-example-grid b {
+  color: #fef3c7;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+}
+
+.class-example-grid p {
+  color: #9fb0cc;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
+.guide-tip {
+  margin-top: 18px;
+  padding: 13px 15px;
+  background: #0c1a1c;
+  border: 1px solid #2f6b5066;
+  border-radius: 12px;
+  color: #a7f3d0;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
 /* ====== guided missions ====== */
 .guided-home {
   flex: 1;

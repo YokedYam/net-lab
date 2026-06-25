@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PBQS } from '../pbqData';
 import { PortDrill } from './PortDrill';
+import { CidrSizingDrill } from './CidrSizingDrill';
+import { SubnettingGuide } from './SubnettingGuide';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { SubnetField } from '../study';
@@ -102,6 +104,35 @@ export function PbqMode({
     );
   }
 
+  if (activeId === 'cidr-sizing-drill') {
+    return (
+      <CidrSizingDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+        onGuide={() => {
+          setActiveId('subnetting-guide');
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
+  if (activeId === 'subnetting-guide') {
+    return (
+      <SubnettingGuide
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (!pbq) {
     const groups = DOMAINS.map((d) => ({
       domain: d,
@@ -129,6 +160,28 @@ export function PbqMode({
                 <span className="pbq-tile-title">Port &amp; Protocol Drill</span>
                 <span className="pbq-tile-domain" style={{ color: '#3b82f6' }}>
                   1.0 Networking Concepts · 16 protocols
+                </span>
+              </button>
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#14b8a6' } as React.CSSProperties}
+                onClick={() => { setActiveId('cidr-sizing-drill'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">Drill</span>
+                <span className="pbq-tile-title">CIDR Sizing Drill</span>
+                <span className="pbq-tile-domain" style={{ color: '#14b8a6' }}>
+                  1.0 Networking Concepts · best-fit subnets
+                </span>
+              </button>
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#facc15' } as React.CSSProperties}
+                onClick={() => { setActiveId('subnetting-guide'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">Guide</span>
+                <span className="pbq-tile-title">Subnetting Shortcut Guide</span>
+                <span className="pbq-tile-domain" style={{ color: '#facc15' }}>
+                  /25 through /30 · network and broadcast
                 </span>
               </button>
             </div>
@@ -176,6 +229,11 @@ export function PbqMode({
         setGenErr('');
       }}
       onResource={onResource}
+      onGuide={() => {
+        setActiveId('subnetting-guide');
+        setGen(null);
+        setGenErr('');
+      }}
       onGenerate={genSimilar}
       genBusy={genBusy}
       genErr={genErr}
@@ -183,7 +241,7 @@ export function PbqMode({
   );
 }
 
-function PbqRunner({ pbq, onBack, onResource, onGenerate, genBusy, genErr }: { pbq: Pbq; onBack: () => void; onResource: (c: string) => void; onGenerate: () => void; genBusy: boolean; genErr: string }) {
+function PbqRunner({ pbq, onBack, onResource, onGuide, onGenerate, genBusy, genErr }: { pbq: Pbq; onBack: () => void; onResource: (c: string) => void; onGuide: () => void; onGenerate: () => void; genBusy: boolean; genErr: string }) {
   const [grade, setGrade] = useState<Grade | null>(null);
   const accent = DOMAINS.find((d) => d.id === pbq.domain)?.color ?? '#3b82f6';
 
@@ -216,7 +274,7 @@ function PbqRunner({ pbq, onBack, onResource, onGenerate, genBusy, genErr }: { p
         {pbq.kind === 'teachback' && <TeachbackBody pbq={pbq} grade={grade} setGrade={setGrade} />}
       </div>
 
-      {grade && <Results grade={grade} pbq={pbq} onResource={onResource} onRetry={() => setGrade(null)} onGenerate={onGenerate} genBusy={genBusy} genErr={genErr} />}
+      {grade && <Results grade={grade} pbq={pbq} onResource={onResource} onGuide={onGuide} onRetry={() => setGrade(null)} onGenerate={onGenerate} genBusy={genBusy} genErr={genErr} />}
     </div>
   );
 }
@@ -521,7 +579,7 @@ function SubmitBar({ onSubmit, disabled }: { onSubmit: () => void; disabled: boo
   );
 }
 
-function Results({ grade, pbq, onResource, onRetry, onGenerate, genBusy, genErr }: { grade: Grade; pbq: Pbq; onResource: (c: string) => void; onRetry: () => void; onGenerate: () => void; genBusy: boolean; genErr: string }) {
+function Results({ grade, pbq, onResource, onGuide, onRetry, onGenerate, genBusy, genErr }: { grade: Grade; pbq: Pbq; onResource: (c: string) => void; onGuide: () => void; onRetry: () => void; onGenerate: () => void; genBusy: boolean; genErr: string }) {
   const pct = Math.round((grade.correct / grade.total) * 100);
   const perfect = grade.correct === grade.total;
   // The AI "generate similar" path only knows the original four kinds.
@@ -571,6 +629,15 @@ function Results({ grade, pbq, onResource, onRetry, onGenerate, genBusy, genErr 
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {pbq.kind === 'subnet' && !perfect && (
+        <div className="subnet-review-prompt">
+          <span>Want to review the shortcut before trying again?</span>
+          <button className="big-btn ghost" onClick={onGuide}>
+            Open subnetting guide
+          </button>
         </div>
       )}
 
