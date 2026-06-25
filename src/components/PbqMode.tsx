@@ -4,6 +4,8 @@ import { PortDrill } from './PortDrill';
 import { CidrSizingDrill } from './CidrSizingDrill';
 import { SubnettingGuide } from './SubnettingGuide';
 import { SubnetDesignDrill } from './SubnetDesignDrill';
+import { TopologyPlacementDrill } from './TopologyPlacementDrill';
+import { VlanAssignDrill } from './VlanAssignDrill';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { SubnetField } from '../study';
@@ -151,6 +153,30 @@ export function PbqMode({
     );
   }
 
+  if (activeId === 'topology-placement-drill') {
+    return (
+      <TopologyPlacementDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
+  if (activeId === 'vlan-assign-drill') {
+    return (
+      <VlanAssignDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (!pbq) {
     const groups = DOMAINS.map((d) => ({
       domain: d,
@@ -211,6 +237,28 @@ export function PbqMode({
                 <span className="pbq-tile-title">Subnet Design PBQ</span>
                 <span className="pbq-tile-domain" style={{ color: '#8b5cf6' }}>
                   allocate office networks from a /24
+                </span>
+              </button>
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#fb923c' } as React.CSSProperties}
+                onClick={() => { setActiveId('topology-placement-drill'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">PBQ drill</span>
+                <span className="pbq-tile-title">Topology Placement PBQ</span>
+                <span className="pbq-tile-domain" style={{ color: '#fb923c' }}>
+                  place firewall, switch, WAP, servers
+                </span>
+              </button>
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#22d3ee' } as React.CSSProperties}
+                onClick={() => { setActiveId('vlan-assign-drill'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">PBQ drill</span>
+                <span className="pbq-tile-title">VLAN Port Assignment PBQ</span>
+                <span className="pbq-tile-domain" style={{ color: '#22d3ee' }}>
+                  tag switchports: access, trunk, unused
                 </span>
               </button>
             </div>

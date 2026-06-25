@@ -3118,6 +3118,641 @@ svg.scene text {
   margin-top: 18px;
 }
 
+/* ---------- Visual Topology PBQ ---------- */
+.visual-topo-card {
+  max-width: 1320px;
+}
+
+.visual-topo-shell {
+  display: grid;
+  grid-template-columns: 205px minmax(700px, 1fr) 300px;
+  gap: 14px;
+  align-items: stretch;
+  margin-top: 14px;
+}
+
+.topo-actionbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: #9fb0cc;
+  font-size: 13px;
+}
+
+.topo-actionbar b {
+  color: #f8fafc;
+}
+
+.topo-palette,
+.topo-terminal {
+  background: #0a0f1c;
+  border: 1px solid #243355;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.topo-panel-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #8b9cbd;
+  margin-bottom: 10px;
+}
+
+.topo-device {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #101a30;
+  border: 1px solid #2c3c63;
+  border-radius: 8px;
+  color: #dbe4f3;
+  padding: 9px 10px;
+  margin-bottom: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.topo-device-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 34px;
+  border-radius: 7px;
+  background: #16213c;
+  color: #93c5fd;
+  flex: none;
+}
+
+.topo-device-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.topo-device-copy b {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.topo-device-copy small {
+  color: #8b9cbd;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.topo-device.active {
+  border-color: #fb923c;
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.35);
+}
+
+.topo-device:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.topo-selected-status {
+  font-size: 12px;
+  color: #9fb0cc;
+  padding: 7px 10px;
+  background: #16213c;
+  border: 1px solid #2c3c63;
+  border-radius: 7px;
+  margin-bottom: 10px;
+}
+
+.topo-selected-status b {
+  color: #fb923c;
+}
+
+.topo-mini-help {
+  color: #8b9cbd;
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 10px;
+}
+
+.office-map {
+  position: relative;
+  min-height: 610px;
+  background:
+    linear-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+    #dceaf5;
+  background-size: 28px 28px;
+  border: 1px solid #8aa2b8;
+  border-radius: 10px;
+  overflow: hidden;
+  color: #1f2937;
+}
+
+.map-zone {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid rgba(80, 109, 130, 0.55);
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 8px;
+  padding: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  z-index: 1;
+}
+
+.internet-zone {
+  left: 4%;
+  top: 6%;
+  width: 12%;
+  height: 15%;
+  border-radius: 999px;
+  background: #f8fafc;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.telco-zone {
+  left: 6.5%;
+  top: 39%;
+  width: 15%;
+  height: 34%;
+  background: #fef3c7;
+  border-style: dashed;
+}
+
+.mdf-zone {
+  left: 22%;
+  top: 39%;
+  width: 15.5%;
+  height: 34%;
+  background: rgba(226, 232, 240, 0.7);
+  border-style: dashed;
+}
+
+.exec-zone {
+  left: 37%;
+  top: 6%;
+  width: 56%;
+  height: 40%;
+  background: rgba(239, 246, 255, 0.72);
+}
+
+.server-zone {
+  left: 38%;
+  top: 58%;
+  width: 21%;
+  height: 28%;
+  background: rgba(219, 234, 254, 0.78);
+}
+
+.building-b-zone {
+  left: 61%;
+  top: 50%;
+  width: 37%;
+  height: 44%;
+  background: rgba(220, 252, 231, 0.74);
+}
+
+.map-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.map-lines path {
+  fill: none;
+  stroke: #0284c7;
+  stroke-width: 0.82;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 94px;
+  min-height: 78px;
+  display: grid;
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: #f8fafc;
+  border: 2px dashed #64748b;
+  border-radius: 8px;
+  color: #334155;
+  cursor: pointer;
+  z-index: 4;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+  text-align: center;
+  user-select: none;
+}
+
+.map-slot:focus-visible,
+.map-clear:focus-visible,
+.map-endpoint:focus-visible {
+  outline: 3px solid rgba(251, 146, 60, 0.48);
+  outline-offset: 2px;
+}
+
+.map-empty-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 17px;
+  font-weight: 900;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+.map-slot span {
+  font-size: 11px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.map-slot.filled {
+  border-style: solid;
+  border-color: #2563eb;
+}
+
+.map-slot.ok {
+  border-color: #16a34a;
+  background: #dcfce7;
+}
+
+.map-slot.bad {
+  border-color: #dc2626;
+  background: #fee2e2;
+}
+
+.map-device-art {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 32px;
+  color: #2563eb;
+}
+
+.map-device-name {
+  display: grid;
+  gap: 1px;
+}
+
+.map-device-name b {
+  color: #0f172a;
+  font-size: 12px;
+  line-height: 1;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+.map-device-name small {
+  max-width: 78px;
+  color: #334155;
+  font-size: 9.5px;
+  line-height: 1.1;
+}
+
+.map-clear {
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid #94a3b8;
+  background: #fff;
+  color: #475569;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+}
+
+.map-clear:hover {
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.map-clear svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.map-endpoint {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 104px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  padding: 7px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
+  box-shadow: 0 5px 12px rgba(15, 23, 42, 0.14);
+  cursor: pointer;
+  z-index: 3;
+}
+
+.map-endpoint .topo-svg {
+  width: 21px;
+  height: 21px;
+  flex: none;
+}
+
+.topo-svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cloud-svg {
+  width: 42px;
+  height: 34px;
+  color: #64748b;
+}
+
+.terminal-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.terminal-tabs button {
+  flex: 1;
+  background: #101a30;
+  border: 1px solid #243355;
+  color: #9fb0cc;
+  border-radius: 7px;
+  padding: 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.terminal-tabs button.active {
+  color: #fff;
+  border-color: #60a5fa;
+}
+
+.terminal-window {
+  min-height: 310px;
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 12px;
+  color: #d1d5db;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.terminal-window b,
+.terminal-window span {
+  display: block;
+}
+
+.terminal-window b {
+  color: #93c5fd;
+  margin-bottom: 8px;
+}
+
+.topo-results {
+  margin-top: 18px;
+}
+
+/* ---------- VLAN port-assignment PBQ ---------- */
+
+.vlan-legend {
+  margin: 16px 0 18px;
+}
+
+.vlan-legend-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #8b9cbd;
+  margin-bottom: 8px;
+}
+
+.vlan-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vlan-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #101a30;
+  border: 1px solid #2c3c63;
+  border-radius: 8px;
+  color: #dbe4f3;
+  padding: 8px 11px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.vlan-chip:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.vlan-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--vlan);
+  flex: none;
+}
+
+.vlan-chip-copy {
+  display: grid;
+  gap: 1px;
+}
+
+.vlan-chip-copy b {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.vlan-chip-copy small {
+  font-size: 11px;
+  color: #8b9cbd;
+}
+
+.vlan-chip.active {
+  border-color: var(--vlan);
+  box-shadow: 0 0 0 1px var(--vlan);
+}
+
+.vlan-switch {
+  margin-top: 6px;
+}
+
+.vlan-switch-face {
+  background: linear-gradient(180deg, #11192c, #0a0f1c);
+  border: 1px solid #2a3a5e;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.12), 0 10px 26px rgba(2, 6, 23, 0.5);
+}
+
+.vlan-switch-name {
+  display: inline-block;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #7c8db0;
+  margin-bottom: 14px;
+}
+
+.vlan-ports {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px 16px;
+}
+
+.vlan-portcol {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+}
+
+.vlan-port {
+  position: relative;
+  width: 100%;
+  max-width: 64px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  background: #0d1322;
+  border: 1px solid #38476c;
+  border-radius: 7px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: border-color 0.1s, box-shadow 0.1s;
+}
+
+.vlan-port:disabled {
+  cursor: default;
+}
+
+.vlan-port:hover:not(:disabled) {
+  border-color: #60a5fa;
+}
+
+.vlan-port-num {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 9px;
+  color: #64748b;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+.vlan-port-tag {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1;
+}
+
+.vlan-port.set {
+  background: color-mix(in srgb, var(--vlan) 26%, #0d1322);
+  border-color: var(--vlan);
+  box-shadow: inset 0 0 0 1px var(--vlan);
+}
+
+.vlan-port.ok {
+  border-color: #22c55e;
+  box-shadow: inset 0 0 0 2px #16a34a;
+}
+
+.vlan-port.bad {
+  border-color: #ef4444;
+  box-shadow: inset 0 0 0 2px #dc2626;
+}
+
+.vlan-port-device {
+  font-size: 10.5px;
+  line-height: 1.2;
+  color: #9fb0cc;
+  min-height: 26px;
+}
+
+.vlan-switch-help {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #8b9cbd;
+}
+
+@media (max-width: 760px) {
+  .vlan-ports {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .visual-topo-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .topo-palette {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .topo-palette .topo-panel-label,
+  .topo-palette .topo-mini-help {
+    grid-column: 1 / -1;
+  }
+
+  .topo-device {
+    margin-bottom: 0;
+  }
+
+  .office-map {
+    min-height: 570px;
+  }
+}
+
+@media (max-width: 700px) {
+  .topo-palette {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ====== guided missions ====== */
 .guided-home {
   flex: 1;
