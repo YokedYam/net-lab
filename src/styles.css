@@ -1228,6 +1228,40 @@ svg.scene text {
   transform: translateY(-1px);
 }
 
+.quiz-exam-card {
+  width: min(760px, 100%);
+  margin: 0 auto 22px;
+  display: grid;
+  gap: 7px;
+  min-height: 132px;
+  text-align: left;
+  background: #10111e;
+  border: 1px solid #4b2e45;
+  border-radius: 14px;
+  padding: 18px;
+  color: #cdd9f0;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, transform 0.12s;
+}
+
+.quiz-exam-card:hover,
+.quiz-exam-card:focus-visible {
+  border-color: #f472b6;
+  background: #171326;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.quiz-exam-card .mode-eyebrow {
+  color: #f9a8d4;
+}
+
+.quiz-exam-card .mode-count {
+  background: #2a1430;
+  border-color: #6b2f63;
+  color: #fce7f3;
+}
+
 .mode-eyebrow {
   color: #93c5fd;
   font-size: 11px;
@@ -1463,6 +1497,12 @@ svg.scene text {
   background: #142239;
 }
 
+.quiz-choice.selected {
+  border-color: #60a5fa;
+  background: #16294d;
+  color: #f8fbff;
+}
+
 .quiz-choice:disabled {
   cursor: default;
 }
@@ -1574,6 +1614,265 @@ svg.scene text {
   color: #f0abfc;
 }
 
+/* ---------- exam sim ---------- */
+.exam-intro {
+  max-width: 760px;
+}
+
+.exam-kicker {
+  display: inline-flex;
+  margin-bottom: 10px;
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.exam-rules {
+  width: min(720px, 100%);
+  margin: 24px auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.exam-rules div {
+  background: #0d1322;
+  border: 1px solid #1f2c4a;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.exam-rules b {
+  display: block;
+  color: #f8fbff;
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.exam-rules span {
+  color: #8ea0bf;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.exam-intro-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.exam-statusbar {
+  max-width: 760px;
+  margin: 0 auto 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.exam-clock {
+  border: 1px solid #4b2e45;
+  background: #20111f;
+  color: #f9a8d4;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.exam-progress {
+  justify-self: end;
+  color: #8ea0bf;
+  font-size: 12.5px;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+.exam-card {
+  overflow: visible;
+}
+
+.exam-actions {
+  margin-top: 20px;
+}
+
+.exam-ai-box {
+  margin-bottom: 14px;
+}
+
+.exam-ai-text {
+  margin: 12px 0 0;
+  background: #101a30;
+  border: 1px solid #243355;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #d8e4f8;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.exam-results {
+  max-width: 760px;
+  margin: 6vh auto 0;
+  text-align: center;
+  background: #0d1322;
+  border: 1px solid #1f2c4a;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+}
+
+.exam-results > .big-btn {
+  margin: 0 5px 8px;
+}
+
+.exam-result-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.exam-result-pill.pass {
+  color: #6ee7b7;
+  border: 1px solid #286b58;
+  background: #0f2c24;
+}
+
+.exam-result-pill.fail {
+  color: #fca5a5;
+  border: 1px solid #6b2f2f;
+  background: #2a1414;
+}
+
+.exam-results h1 {
+  margin: 14px 0 8px;
+  color: #f8fbff;
+  font-size: 44px;
+}
+
+.exam-results p {
+  max-width: 560px;
+  margin: 0 auto 24px;
+  color: #9fb1d1;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.exam-domain-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 24px;
+  text-align: left;
+}
+
+.exam-domain-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  background: #101a30;
+  border: 1px solid #243355;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.exam-domain-name {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.exam-domain-score {
+  color: #e8eefb;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.exam-review {
+  margin: 28px 0;
+  text-align: left;
+}
+
+.exam-review h2 {
+  margin: 0 0 14px;
+  color: #f8fbff;
+  font-size: 18px;
+}
+
+.exam-review-domain {
+  margin-top: 18px;
+}
+
+.exam-review-domain h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.exam-miss-list {
+  display: grid;
+  gap: 12px;
+}
+
+.exam-miss-card {
+  background: #101a30;
+  border: 1px solid #243355;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.exam-miss-topic {
+  display: inline-flex;
+  color: #9fb1d1;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.exam-miss-q {
+  margin: 0 0 12px !important;
+  max-width: none !important;
+  color: #e8eefb !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+
+.exam-miss-answers {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.exam-miss-answers span {
+  color: #8ea0bf;
+  font-size: 12.5px;
+}
+
+.exam-miss-answers b {
+  color: #f8fbff;
+  font-weight: 700;
+}
+
+.exam-miss-explain {
+  margin: 0 0 12px !important;
+  max-width: none !important;
+  color: #cdd9f0 !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+}
+
 @media (max-width: 700px) {
   .quiz-mode-grid {
     grid-template-columns: 1fr;
@@ -1608,6 +1907,27 @@ svg.scene text {
   .acro-btn:nth-last-child(-n + 2) .acro-pop {
     right: 16px;
     left: 16px;
+  }
+
+  .exam-rules {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-statusbar {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-clock {
+    width: fit-content;
+  }
+
+  .exam-progress {
+    justify-self: start;
+  }
+
+  .exam-results {
+    margin-top: 24px;
+    padding: 22px;
   }
 }
 

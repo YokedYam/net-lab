@@ -2,6 +2,7 @@
 // never automatic. Two actions over one endpoint:
 //   { action: "question", source } -> a fresh quiz question similar to source
 //   { action: "pbq",      source } -> a fresh PBQ of the same kind as source
+//   { action: "explain",  source } -> a deeper explanation for a missed exam item
 //
 // Same Azure OpenAI setup as the portfolio Copilot and the AZ-305 lab:
 // OPENAI_BASE_URL is the resource's /openai/v1 path, OPENAI_MODEL is the
@@ -97,6 +98,12 @@ Rules:
 - For "categorize", every item's "bucket" must appear in "buckets".
 - For "order", the items array IS the correct sequence; the app shuffles it for the student.
 - Every "why" teaches the rule in one sentence.`;
+
+const EXPLAIN_INSTRUCTIONS = `You explain missed CompTIA Network+ (N10-009) exam questions.
+
+${VOICE}
+
+Output 2-3 sentences only. Explain why the correct answer is right and why the selected wrong answer was tempting but wrong. No markdown. No em dashes.`;
 
 function json(status, body) {
   return {
@@ -286,6 +293,27 @@ module.exports = async function (context, req) {
         return;
       }
       context.res = json(200, { pbq: out });
+      return;
+    }
+
+    if (action === "explain") {
+      if (!source || typeof source.question !== "string") {
+        context.res = json(400, { error: "Missing source question." });
+        return;
+      }
+      const prompt = `The user answered this Network+ question incorrectly.
+Question: ${String(source.question).slice(0, 900)}
+Correct answer: ${String(source.correct || "").slice(0, 300)}
+Their answer: ${String(source.selected || "").slice(0, 300)}
+Explanation: ${String(source.explanation || "").slice(0, 900)}
+
+Give a deeper explanation.`;
+      const text = await callModel(EXPLAIN_INSTRUCTIONS, prompt, 900);
+      if (!text || text.length < 20) {
+        context.res = json(502, { error: "The AI wrote an unusable explanation. Try again." });
+        return;
+      }
+      context.res = json(200, { explanation: text.slice(0, 1200) });
       return;
     }
 

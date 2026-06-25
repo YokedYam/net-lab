@@ -86,6 +86,20 @@ export async function generateSimilarQuestion(
   };
 }
 
+export async function explainMissedExamQuestion(source: {
+  question: string;
+  correct: string;
+  selected: string;
+  explanation: string;
+}): Promise<AiResult<string>> {
+  const res = await post({ action: 'explain', source });
+  if (!res.ok) return res;
+  if (typeof res.value.explanation !== 'string' || res.value.explanation.trim().length < 20) {
+    return { ok: false, message: 'The AI wrote an unusable explanation. Try again.' };
+  }
+  return { ok: true, value: res.value.explanation.trim() };
+}
+
 // Subnet PBQs don't need a model: the grading is computed from ip + cidr, so a
 // fresh one is just fresh numbers. Instant, free, and never wrong.
 function randomSubnetPbq(source: SubnetPbq): SubnetPbq {

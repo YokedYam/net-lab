@@ -6,6 +6,7 @@ import type { DomainId } from '../study';
 import { conceptById } from '../concepts';
 import { generateSimilarQuestion } from '../ai';
 import { AcronymHelp, acronymsInText } from './AcronymHelp';
+import { ExamSim } from './ExamSim';
 
 type Filter = DomainId | 'all';
 type DifficultyOption = {
@@ -42,6 +43,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function QuizMode({ onResource }: { onResource: (conceptId: string) => void }) {
+  const [examOpen, setExamOpen] = useState(false);
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('easy');
   const [filter, setFilter] = useState<Filter>('all');
   const [started, setStarted] = useState(false);
@@ -142,6 +144,10 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  if (examOpen) {
+    return <ExamSim onExit={() => setExamOpen(false)} />;
+  }
+
   if (!started) {
     return (
       <div className="study study-quiz">
@@ -168,6 +174,15 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
               );
             })}
           </div>
+          <button className="quiz-exam-card" onClick={() => setExamOpen(true)}>
+            <span className="mode-eyebrow">Timed review</span>
+            <span className="mode-title">Exam Sim</span>
+            <span className="mode-copy">
+              65 harder questions, 90 minutes, no hints, no instant feedback. Review the misses at
+              the end.
+            </span>
+            <span className="mode-count">150-question bank</span>
+          </button>
           <div className="study-filter">
             <span className="study-filter-label">Pick a focus</span>
             <div className="chip-row">
