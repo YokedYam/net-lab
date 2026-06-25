@@ -3,6 +3,7 @@ import { EXAM_BANK } from '../examData';
 import type { QuizQuestion } from '../quizData';
 import { DOMAINS, domainName } from '../study';
 import { explainMissedExamQuestion } from '../ai';
+import { lectureResourcesForQuestion } from '../lectureResources';
 
 const EXAM_SIZE = 65;
 const PASSING_SCORE = 39;
@@ -206,6 +207,19 @@ export function ExamSim({ onExit }: { onExit?: () => void }) {
                           <span>Correct answer: <b>{item.choices[item.answer]}</b></span>
                         </div>
                         <p className="exam-miss-explain">{item.explanation}</p>
+                        {lectureResourcesForQuestion(item).length > 0 && (
+                          <div className="lecture-links compact" aria-label="Lecture review links">
+                            <span className="lecture-label">Lecture review</span>
+                            <div className="lecture-chip-row">
+                              {lectureResourcesForQuestion(item).map((link) => (
+                                <a key={link.id} className="lecture-chip" href={link.url} target="_blank" rel="noreferrer">
+                                  <span>{link.section}</span>
+                                  {link.title}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         <button className="big-btn ghost" onClick={() => askAi(i)} disabled={aiBusy !== null}>
                           {aiBusy === i ? 'Asking AI...' : 'Ask AI'}
                         </button>

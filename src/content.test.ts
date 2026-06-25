@@ -6,6 +6,7 @@ import { CONCEPTS } from './concepts';
 import { OSI_LAYERS, OSI_JOURNEY, OSI_MNEMONICS, TCPIP_GROUPS } from './osiData';
 import { TSHOOT_STEPS, CLI_TOOLS, TRACE_HOPS, TRACE_VERDICT, ARP_ROWS, ARP_NOTE } from './troubleshootData';
 import { MATCH_SETS } from './matchData';
+import { lectureResourcesForQuestion } from './lectureResources';
 import { DOMAINS, subnetFacts, type SubnetField } from './study';
 
 const CONCEPT_IDS = new Set(CONCEPTS.map((c) => c.id));
@@ -53,6 +54,13 @@ describe('Quiz bank', () => {
     for (const q of QUIZ) {
       if (q.conceptId) expect(CONCEPT_IDS.has(q.conceptId)).toBe(true);
     }
+  });
+  it('links DNS record questions to the matching lecture review', () => {
+    const q = EASY_QUIZ.find((item) => item.id === 'easy-dns-3');
+    expect(q).toBeTruthy();
+    const links = lectureResourcesForQuestion(q!);
+    expect(links.map((link) => link.id)).toContain('dnsRecords');
+    expect(links[0].url).toContain('professormesser.com');
   });
 });
 

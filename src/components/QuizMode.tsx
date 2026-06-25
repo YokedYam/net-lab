@@ -7,6 +7,7 @@ import { conceptById } from '../concepts';
 import { generateSimilarQuestion } from '../ai';
 import { AcronymHelp, acronymsInText } from './AcronymHelp';
 import { ExamSim } from './ExamSim';
+import { lectureResourcesForQuestion } from '../lectureResources';
 
 type Filter = DomainId | 'all';
 type DifficultyOption = {
@@ -87,6 +88,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
       ...(picked !== null ? [q.explanation] : []),
     ]);
   }, [picked, q]);
+  const lectureLinks = useMemo(() => (q ? lectureResourcesForQuestion(q) : []), [q]);
 
   const choose = (i: number) => {
     if (picked !== null || !q) return;
@@ -266,6 +268,19 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
           <div className={isRight ? 'quiz-feedback ok' : 'quiz-feedback bad'}>
             <div className="qf-head">{isRight ? '✓ Correct' : '✗ Not quite'}</div>
             <p className="qf-text">{q.explanation}</p>
+            {!isRight && lectureLinks.length > 0 && (
+              <div className="lecture-links" aria-label="Lecture review links">
+                <span className="lecture-label">Lecture review</span>
+                <div className="lecture-chip-row">
+                  {lectureLinks.map((link) => (
+                    <a key={link.id} className="lecture-chip" href={link.url} target="_blank" rel="noreferrer">
+                      <span>{link.section}</span>
+                      {link.title}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="qf-actions">
               {!isRight && linkedConcept && (
                 <button className="big-btn ghost" onClick={() => onResource(q.conceptId!)}>
