@@ -3,6 +3,7 @@ import { PBQS } from '../pbqData';
 import { PortDrill } from './PortDrill';
 import { CidrSizingDrill } from './CidrSizingDrill';
 import { SubnettingGuide } from './SubnettingGuide';
+import { SubnetDesignDrill } from './SubnetDesignDrill';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { SubnetField } from '../study';
@@ -133,6 +134,23 @@ export function PbqMode({
     );
   }
 
+  if (activeId === 'subnet-design-drill') {
+    return (
+      <SubnetDesignDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+        onGuide={() => {
+          setActiveId('subnetting-guide');
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (!pbq) {
     const groups = DOMAINS.map((d) => ({
       domain: d,
@@ -182,6 +200,17 @@ export function PbqMode({
                 <span className="pbq-tile-title">Subnetting Shortcut Guide</span>
                 <span className="pbq-tile-domain" style={{ color: '#facc15' }}>
                   /25 through /30 · network and broadcast
+                </span>
+              </button>
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#8b5cf6' } as React.CSSProperties}
+                onClick={() => { setActiveId('subnet-design-drill'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">PBQ drill</span>
+                <span className="pbq-tile-title">Subnet Design PBQ</span>
+                <span className="pbq-tile-domain" style={{ color: '#8b5cf6' }}>
+                  allocate office networks from a /24
                 </span>
               </button>
             </div>
