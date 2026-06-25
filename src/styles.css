@@ -3263,13 +3263,8 @@ svg.scene text {
   z-index: 1;
 }
 
-.internet-zone {
-  left: 4%;
-  top: 6%;
-  width: 12%;
-  height: 15%;
+.map-zone.is-circle {
   border-radius: 999px;
-  background: #f8fafc;
   display: grid;
   place-items: center;
   align-content: center;
@@ -3277,46 +3272,8 @@ svg.scene text {
   text-align: center;
 }
 
-.telco-zone {
-  left: 6.5%;
-  top: 39%;
-  width: 15%;
-  height: 34%;
-  background: #fef3c7;
-  border-style: dashed;
-}
-
-.mdf-zone {
-  left: 22%;
-  top: 39%;
-  width: 15.5%;
-  height: 34%;
-  background: rgba(226, 232, 240, 0.7);
-  border-style: dashed;
-}
-
-.exec-zone {
-  left: 37%;
-  top: 6%;
-  width: 56%;
-  height: 40%;
-  background: rgba(239, 246, 255, 0.72);
-}
-
-.server-zone {
-  left: 38%;
-  top: 58%;
-  width: 21%;
-  height: 28%;
-  background: rgba(219, 234, 254, 0.78);
-}
-
-.building-b-zone {
-  left: 61%;
-  top: 50%;
-  width: 37%;
-  height: 44%;
-  background: rgba(220, 252, 231, 0.74);
+.map-zone.label-right {
+  text-align: right;
 }
 
 .map-lines {

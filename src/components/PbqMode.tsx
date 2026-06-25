@@ -4,7 +4,7 @@ import { PortDrill } from './PortDrill';
 import { CidrSizingDrill } from './CidrSizingDrill';
 import { SubnettingGuide } from './SubnettingGuide';
 import { SubnetDesignDrill } from './SubnetDesignDrill';
-import { TopologyPlacementDrill } from './TopologyPlacementDrill';
+import { TopologyPlacementDrill, DmzPlacementDrill } from './TopologyPlacementDrill';
 import { VlanAssignDrill } from './VlanAssignDrill';
 import { TshootConsoleDrill } from './TshootConsoleDrill';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
@@ -166,6 +166,18 @@ export function PbqMode({
     );
   }
 
+  if (activeId === 'dmz-placement-drill') {
+    return (
+      <DmzPlacementDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (activeId === 'vlan-assign-drill') {
     return (
       <VlanAssignDrill
@@ -261,6 +273,17 @@ export function PbqMode({
                 <span className="pbq-tile-title">Topology Placement PBQ</span>
                 <span className="pbq-tile-domain" style={{ color: '#fb923c' }}>
                   place firewall, switch, WAP, servers
+                </span>
+              </button>
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#f87171' } as React.CSSProperties}
+                onClick={() => { setActiveId('dmz-placement-drill'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">PBQ drill</span>
+                <span className="pbq-tile-title">Screened Subnet (DMZ) PBQ</span>
+                <span className="pbq-tile-domain" style={{ color: '#f87171' }}>
+                  4.0 place public servers in the DMZ, keep data inside
                 </span>
               </button>
               <button
