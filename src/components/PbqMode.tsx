@@ -6,6 +6,7 @@ import { SubnettingGuide } from './SubnettingGuide';
 import { SubnetDesignDrill } from './SubnetDesignDrill';
 import { TopologyPlacementDrill } from './TopologyPlacementDrill';
 import { VlanAssignDrill } from './VlanAssignDrill';
+import { TshootConsoleDrill } from './TshootConsoleDrill';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { SubnetField } from '../study';
@@ -177,6 +178,18 @@ export function PbqMode({
     );
   }
 
+  if (activeId === 'tshoot-console-drill') {
+    return (
+      <TshootConsoleDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (!pbq) {
     const groups = DOMAINS.map((d) => ({
       domain: d,
@@ -259,6 +272,17 @@ export function PbqMode({
                 <span className="pbq-tile-title">VLAN Port Assignment PBQ</span>
                 <span className="pbq-tile-domain" style={{ color: '#22d3ee' }}>
                   tag switchports: access, trunk, unused
+                </span>
+              </button>
+              <button
+                className="pbq-tile"
+                style={{ '--accent': '#34d399' } as React.CSSProperties}
+                onClick={() => { setActiveId('tshoot-console-drill'); setGen(null); setGenErr(''); }}
+              >
+                <span className="pbq-kind">PBQ drill</span>
+                <span className="pbq-tile-title">Troubleshooting Console PBQ</span>
+                <span className="pbq-tile-domain" style={{ color: '#34d399' }}>
+                  5.0 read ipconfig/ping/nslookup, fix the fault
                 </span>
               </button>
             </div>
