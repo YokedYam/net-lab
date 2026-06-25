@@ -7,8 +7,11 @@ import { SubnetDesignDrill } from './SubnetDesignDrill';
 import { TopologyPlacementDrill, DmzPlacementDrill } from './TopologyPlacementDrill';
 import { VlanAssignDrill } from './VlanAssignDrill';
 import { TshootConsoleDrill } from './TshootConsoleDrill';
+import { FirewallAclDrill } from './FirewallAclDrill';
+import { WirelessChannelDrill } from './WirelessChannelDrill';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
+import type { DomainId } from '../study';
 import type { SubnetField } from '../study';
 import { conceptById } from '../concepts';
 import { generateSimilarPbq } from '../ai';
@@ -35,6 +38,31 @@ const KIND_LABEL: Record<Pbq['kind'], string> = {
   recall: 'Type recall',
   teachback: 'Teach-back',
 };
+
+// The interactive drills (their own components, opened by activeId), tagged with
+// the exam domain they belong to so they slot into the right dropdown. "Exam PBQ"
+// marks the full-screen simulations that mirror the real performance-based items.
+interface DrillMeta {
+  id: string;
+  title: string;
+  domain: DomainId;
+  blurb: string;
+  accent: string;
+  kind: string;
+}
+
+const DRILLS: DrillMeta[] = [
+  { id: 'topology-placement-drill', title: 'Topology Placement PBQ', domain: '1.0', blurb: 'place firewall, switch, WAP, servers on the diagram', accent: '#fb923c', kind: 'Exam PBQ' },
+  { id: 'port-drill', title: 'Port & Protocol Drill', domain: '1.0', blurb: 'match 16 protocols to their ports', accent: '#3b82f6', kind: 'Drill' },
+  { id: 'cidr-sizing-drill', title: 'CIDR Sizing Drill', domain: '1.0', blurb: 'pick the best-fit subnet for a host count', accent: '#14b8a6', kind: 'Drill' },
+  { id: 'subnet-design-drill', title: 'Subnet Design PBQ', domain: '1.0', blurb: 'allocate office networks from a /24', accent: '#8b5cf6', kind: 'Exam PBQ' },
+  { id: 'subnetting-guide', title: 'Subnetting Shortcut Guide', domain: '1.0', blurb: '/25 to /30, network and broadcast', accent: '#facc15', kind: 'Guide' },
+  { id: 'vlan-assign-drill', title: 'VLAN Port Assignment PBQ', domain: '2.0', blurb: 'tag switchports: access, trunk, or unused', accent: '#22d3ee', kind: 'Exam PBQ' },
+  { id: 'wireless-channel-drill', title: 'Wireless Channel Plan PBQ', domain: '2.0', blurb: 'assign non-overlapping 2.4GHz channels', accent: '#a78bfa', kind: 'Exam PBQ' },
+  { id: 'firewall-acl-drill', title: 'Firewall ACL PBQ', domain: '4.0', blurb: 'permit or deny each rule under least privilege', accent: '#fb7185', kind: 'Exam PBQ' },
+  { id: 'dmz-placement-drill', title: 'Screened Subnet (DMZ) PBQ', domain: '4.0', blurb: 'public servers in the DMZ, sensitive data inside', accent: '#f87171', kind: 'Exam PBQ' },
+  { id: 'tshoot-console-drill', title: 'Troubleshooting Console PBQ', domain: '5.0', blurb: 'read ipconfig/ping/nslookup, name the fault', accent: '#34d399', kind: 'Exam PBQ' },
+];
 
 // Normalize a typed answer for forgiving comparison.
 const normAns = (s: string): string =>
@@ -202,142 +230,94 @@ export function PbqMode({
     );
   }
 
+  if (activeId === 'firewall-acl-drill') {
+    return (
+      <FirewallAclDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
+  if (activeId === 'wireless-channel-drill') {
+    return (
+      <WirelessChannelDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (!pbq) {
+    const openDrill = (id: string) => { setActiveId(id); setGen(null); setGenErr(''); };
     const groups = DOMAINS.map((d) => ({
       domain: d,
+      drills: DRILLS.filter((dr) => dr.domain === d.id),
       items: PBQS.filter((p) => p.domain === d.id),
-    })).filter((g) => g.items.length > 0);
+    })).filter((g) => g.drills.length > 0 || g.items.length > 0);
 
     return (
       <div className="study study-pbq">
         <div className="study-intro wide">
           <h1>Performance-Based Questions</h1>
           <p className="study-lead">
-            The hands-on part of the exam. Match ports, sort devices by layer, subnet a network, or
-            order the troubleshooting steps, then get graded with a breakdown of exactly what to
-            review.
+            The hands-on part of the exam, grouped by the five N10-009 domains. Tiles marked{' '}
+            <b>Exam PBQ</b> mirror the real performance-based interface: place devices on a diagram,
+            tag switchports, set firewall rules, plan wireless channels, or work a troubleshooting
+            console. The rest are quick drills and a subnetting guide. Everything is graded with a
+            breakdown of exactly what to review.
           </p>
-          <div style={{ marginBottom: 8 }}>
-            <span className="study-filter-label">Drills</span>
-            <div className="pbq-grid">
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#3b82f6' } as React.CSSProperties}
-                onClick={() => { setActiveId('port-drill'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">Drill</span>
-                <span className="pbq-tile-title">Port &amp; Protocol Drill</span>
-                <span className="pbq-tile-domain" style={{ color: '#3b82f6' }}>
-                  1.0 Networking Concepts · 16 protocols
-                </span>
-              </button>
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#14b8a6' } as React.CSSProperties}
-                onClick={() => { setActiveId('cidr-sizing-drill'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">Drill</span>
-                <span className="pbq-tile-title">CIDR Sizing Drill</span>
-                <span className="pbq-tile-domain" style={{ color: '#14b8a6' }}>
-                  1.0 Networking Concepts · best-fit subnets
-                </span>
-              </button>
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#facc15' } as React.CSSProperties}
-                onClick={() => { setActiveId('subnetting-guide'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">Guide</span>
-                <span className="pbq-tile-title">Subnetting Shortcut Guide</span>
-                <span className="pbq-tile-domain" style={{ color: '#facc15' }}>
-                  /25 through /30 · network and broadcast
-                </span>
-              </button>
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#8b5cf6' } as React.CSSProperties}
-                onClick={() => { setActiveId('subnet-design-drill'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">PBQ drill</span>
-                <span className="pbq-tile-title">Subnet Design PBQ</span>
-                <span className="pbq-tile-domain" style={{ color: '#8b5cf6' }}>
-                  allocate office networks from a /24
-                </span>
-              </button>
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#fb923c' } as React.CSSProperties}
-                onClick={() => { setActiveId('topology-placement-drill'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">PBQ drill</span>
-                <span className="pbq-tile-title">Topology Placement PBQ</span>
-                <span className="pbq-tile-domain" style={{ color: '#fb923c' }}>
-                  place firewall, switch, WAP, servers
-                </span>
-              </button>
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#f87171' } as React.CSSProperties}
-                onClick={() => { setActiveId('dmz-placement-drill'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">PBQ drill</span>
-                <span className="pbq-tile-title">Screened Subnet (DMZ) PBQ</span>
-                <span className="pbq-tile-domain" style={{ color: '#f87171' }}>
-                  4.0 place public servers in the DMZ, keep data inside
-                </span>
-              </button>
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#22d3ee' } as React.CSSProperties}
-                onClick={() => { setActiveId('vlan-assign-drill'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">PBQ drill</span>
-                <span className="pbq-tile-title">VLAN Port Assignment PBQ</span>
-                <span className="pbq-tile-domain" style={{ color: '#22d3ee' }}>
-                  tag switchports: access, trunk, unused
-                </span>
-              </button>
-              <button
-                className="pbq-tile"
-                style={{ '--accent': '#34d399' } as React.CSSProperties}
-                onClick={() => { setActiveId('tshoot-console-drill'); setGen(null); setGenErr(''); }}
-              >
-                <span className="pbq-kind">PBQ drill</span>
-                <span className="pbq-tile-title">Troubleshooting Console PBQ</span>
-                <span className="pbq-tile-domain" style={{ color: '#34d399' }}>
-                  5.0 read ipconfig/ping/nslookup, fix the fault
-                </span>
-              </button>
-            </div>
-          </div>
 
-          {groups.map((g, gi) => (
-            <details key={g.domain.id} className="pbq-cat" open={gi === 0}>
-              <summary className="pbq-cat-head" style={{ '--accent': g.domain.color } as React.CSSProperties}>
-                <span className="pbq-cat-dot" style={{ background: g.domain.color }} />
-                <span className="pbq-cat-name">
-                  {g.domain.id} {g.domain.name}
-                </span>
-                <span className="pbq-cat-meta">
-                  {g.domain.weight}% exam &middot; {g.items.length} {g.items.length === 1 ? 'task' : 'tasks'}
-                </span>
-              </summary>
-              <div className="pbq-grid">
-                {g.items.map((p) => {
-                  const accent = g.domain.color;
-                  return (
-                    <button key={p.id} className="pbq-tile" onClick={() => { setActiveId(p.id); setGen(null); setGenErr(''); }} style={{ '--accent': accent } as React.CSSProperties}>
-                      <span className="pbq-kind">{KIND_LABEL[p.kind]}</span>
-                      <span className="pbq-tile-title">{p.title}</span>
-                      <span className="pbq-tile-domain" style={{ color: accent }}>
-                        {p.domain} {domainName(p.domain)}
+          {groups.map((g, gi) => {
+            const count = g.drills.length + g.items.length;
+            return (
+              <details key={g.domain.id} className="pbq-cat" open={gi === 0}>
+                <summary className="pbq-cat-head" style={{ '--accent': g.domain.color } as React.CSSProperties}>
+                  <span className="pbq-cat-dot" style={{ background: g.domain.color }} />
+                  <span className="pbq-cat-name">
+                    {g.domain.id} {g.domain.name}
+                  </span>
+                  <span className="pbq-cat-meta">
+                    {g.domain.weight}% exam &middot; {count} {count === 1 ? 'task' : 'tasks'}
+                  </span>
+                </summary>
+                <div className="pbq-grid">
+                  {g.drills.map((dr) => (
+                    <button
+                      key={dr.id}
+                      className="pbq-tile"
+                      onClick={() => openDrill(dr.id)}
+                      style={{ '--accent': dr.accent } as React.CSSProperties}
+                    >
+                      <span className="pbq-kind">{dr.kind}</span>
+                      <span className="pbq-tile-title">{dr.title}</span>
+                      <span className="pbq-tile-domain" style={{ color: dr.accent }}>
+                        {dr.blurb}
                       </span>
                     </button>
-                  );
-                })}
-              </div>
-            </details>
-          ))}
+                  ))}
+                  {g.items.map((p) => {
+                    const accent = g.domain.color;
+                    return (
+                      <button key={p.id} className="pbq-tile" onClick={() => { setActiveId(p.id); setGen(null); setGenErr(''); }} style={{ '--accent': accent } as React.CSSProperties}>
+                        <span className="pbq-kind">{KIND_LABEL[p.kind]}</span>
+                        <span className="pbq-tile-title">{p.title}</span>
+                        <span className="pbq-tile-domain" style={{ color: accent }}>
+                          {p.domain} {domainName(p.domain)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
+            );
+          })}
         </div>
       </div>
     );
