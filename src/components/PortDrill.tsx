@@ -3,7 +3,22 @@ import { PROTOCOLS } from '../portDrillData';
 import type { Protocol } from '../portDrillData';
 
 type DrillMode = 'guided' | 'hard';
-type Phase = 'main' | 'review' | 'done';
+type Phase = 'card' | 'roundEnd';
+
+// Rounds work the way a flashcard app works. You get a small batch, anything
+// you miss comes straight back before you move on and again at the end of the
+// round, and a protocol is only retired after two clean answers in a row. The
+// batch grows as you stop missing things. Nothing is saved: refresh and you
+// start the session over.
+const ROUND_SIZES = [5, 8, 16];
+// Get one right the first time and it is done. Miss it even once and you have
+// to produce it correctly twice before it stops coming back.
+const FIRST_TARGET = 1;
+const RETRY_TARGET = 2;
+
+const targetFor = (i: number, missed: Set<number>) => (missed.has(i) ? RETRY_TARGET : FIRST_TARGET);
+const isLearned = (i: number, mastery: Record<number, number>, missed: Set<number>) =>
+  (mastery[i] ?? 0) >= targetFor(i, missed);
 
 interface Answers {
   fullName: string;
@@ -29,6 +44,14 @@ function shuffle<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// Weakest cards first: never answered right beats answered right once.
+function buildRound(mastery: Record<number, number>, missed: Set<number>, size: number): number[] {
+  const unlearned = PROTOCOLS.map((_, i) => i).filter((i) => !isLearned(i, mastery, missed));
+  const cold = shuffle(unlearned.filter((i) => (mastery[i] ?? 0) === 0));
+  const warm = shuffle(unlearned.filter((i) => (mastery[i] ?? 0) > 0));
+  return shuffle([...cold, ...warm].slice(0, size));
 }
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -76,17 +99,19 @@ function hintSentence(why: string): string {
 
 export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
   const [mode, setMode] = useState<DrillMode>('guided');
-  const [phase, setPhase] = useState<Phase>('main');
+  const [phase, setPhase] = useState<Phase>('card');
 
-  // Main round
-  const [order, setOrder] = useState<number[]>(() => shuffle(PROTOCOLS.map((_, i) => i)));
-  const [pos, setPos] = useState(0);
+  // The round in play
+  const [roundNo, setRoundNo] = useState(1);
+  const [tier, setTier] = useState(0);
+  const [queue, setQueue] = useState<number[]>(() => buildRound({}, new Set(), ROUND_SIZES[0]));
+  const [roundSize, setRoundSize] = useState(ROUND_SIZES[0]);
+  const [qPos, setQPos] = useState(0);
+  const [isRedo, setIsRedo] = useState(false);
+  const [roundMissed, setRoundMissed] = useState<number[]>([]);
 
-  // Review round
-  const [reviewQueue, setReviewQueue] = useState<number[]>([]);
-  const [reviewPos, setReviewPos] = useState(0);
-
-  // Session tracking
+  // Session tracking. All in memory on purpose.
+  const [mastery, setMastery] = useState<Record<number, number>>({});
   const [missed, setMissed] = useState<Set<number>>(new Set());
   const [hinted, setHinted] = useState<Set<number>>(new Set());
 
@@ -98,8 +123,9 @@ export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
   // Reset confirm
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const currentIndex = phase === 'review' ? reviewQueue[reviewPos] : order[pos];
-  const protocol = phase === 'done' ? null : PROTOCOLS[currentIndex];
+  const currentIndex = queue[qPos];
+  const protocol = phase === 'card' ? PROTOCOLS[currentIndex] : null;
+  const masteredCount = PROTOCOLS.filter((_, i) => isLearned(i, mastery, missed)).length;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const opts = useMemo(() => {
@@ -117,17 +143,37 @@ export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
   }, [protocol?.abbr]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetSession = () => {
-    setOrder(shuffle(PROTOCOLS.map((_, i) => i)));
-    setPos(0);
-    setReviewQueue([]);
-    setReviewPos(0);
-    setPhase('main');
+    setRoundNo(1);
+    setTier(0);
+    setQueue(buildRound({}, new Set(), ROUND_SIZES[0]));
+    setRoundSize(ROUND_SIZES[0]);
+    setQPos(0);
+    setIsRedo(false);
+    setRoundMissed([]);
+    setPhase('card');
+    setMastery({});
     setMissed(new Set());
     setHinted(new Set());
     setAnswers(EMPTY);
     setGrade(null);
     setHintShown(false);
     setConfirmReset(false);
+  };
+
+  const startNextRound = () => {
+    const nextTier = roundMissed.length === 0 ? Math.min(tier + 1, ROUND_SIZES.length - 1) : tier;
+    const next = buildRound(mastery, missed, ROUND_SIZES[nextTier]);
+    setTier(nextTier);
+    setQueue(next);
+    setRoundSize(next.length);
+    setQPos(0);
+    setIsRedo(false);
+    setRoundMissed([]);
+    setRoundNo((r) => r + 1);
+    setAnswers(EMPTY);
+    setGrade(null);
+    setHintShown(false);
+    setPhase('card');
   };
 
   const switchMode = (m: DrillMode) => {
@@ -154,80 +200,75 @@ export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
     if (!protocol) return;
     const g = gradeAll(mode, answers, protocol);
     setGrade(g);
-    const isWrong = !Object.values(g).every(Boolean);
-    if (phase === 'main' && isWrong) {
+    if (!Object.values(g).every(Boolean)) {
       setMissed((prev) => new Set([...prev, currentIndex]));
+      setMastery((m) => ({ ...m, [currentIndex]: 0 }));
+      if (!isRedo && !roundMissed.includes(currentIndex)) {
+        setRoundMissed((prev) => [...prev, currentIndex]);
+      }
     }
   };
 
   const handleNext = () => {
     const isCorrect = grade !== null && Object.values(grade).every(Boolean);
+    const idx = currentIndex;
 
-    if (phase === 'main') {
-      const nextPos = pos + 1;
-      if (nextPos >= TOTAL) {
-        setAnswers(EMPTY);
-        setGrade(null);
-        setHintShown(false);
-        setPos(nextPos);
-        if (missed.size > 0) {
-          setReviewQueue(shuffle([...missed]));
-          setReviewPos(0);
-          setPhase('review');
-        } else {
-          setPhase('done');
-        }
-        return;
-      }
-      setPos(nextPos);
-      setAnswers(EMPTY);
-      setGrade(null);
-      setHintShown(false);
+    setAnswers(EMPTY);
+    setGrade(null);
+    setHintShown(false);
+
+    // Miss it and you do that exact card again right now. Nothing else moves.
+    if (!isCorrect) {
+      setIsRedo(true);
       return;
     }
 
-    if (phase === 'review') {
-      const newQueue = [...reviewQueue];
-      let newPos = reviewPos;
-
-      if (isCorrect) {
-        newQueue.splice(reviewPos, 1);
-        if (newQueue.length === 0) {
-          setReviewQueue([]);
-          setPhase('done');
-          setAnswers(EMPTY);
-          setGrade(null);
-          setHintShown(false);
-          return;
-        }
-        newPos = reviewPos >= newQueue.length ? 0 : reviewPos;
-      } else {
-        newPos = (reviewPos + 1) % newQueue.length;
-      }
-
-      setReviewQueue(newQueue);
-      setReviewPos(newPos);
-      setAnswers(EMPTY);
-      setGrade(null);
-      setHintShown(false);
+    let nextQueue = queue;
+    if (isRedo) {
+      // You needed a second go, so it comes back once more before the round ends.
+      nextQueue = [...queue, idx];
+      setQueue(nextQueue);
+      setIsRedo(false);
+    } else {
+      setMastery((m) => ({ ...m, [idx]: Math.min((m[idx] ?? 0) + 1, RETRY_TARGET) }));
     }
+
+    const nextPos = qPos + 1;
+    if (nextPos >= nextQueue.length) {
+      setPhase('roundEnd');
+      return;
+    }
+    setQPos(nextPos);
   };
 
-  if (phase === 'done') {
-    const firstAttemptCorrect = TOTAL - missed.size;
+  if (phase === 'roundEnd') {
+    const finished = masteredCount === PROTOCOLS.length;
+    const clean = roundMissed.length === 0;
+    const answered = roundSize;
+    const nextSize = ROUND_SIZES[clean ? Math.min(tier + 1, ROUND_SIZES.length - 1) : tier];
+    const remaining = PROTOCOLS.length - masteredCount;
+
     return (
       <div className="study">
         <div className="drill-done">
-          <h2>Session complete</h2>
+          <h2>{finished ? 'All 16 locked in' : `Round ${roundNo} done`}</h2>
           <div className="drill-done-stats">
             <div className="drill-done-stat">
-              <span className="drill-done-val">{firstAttemptCorrect}/{TOTAL}</span>
-              <span className="drill-done-label">first attempt</span>
+              <span className="drill-done-val">
+                {masteredCount}/{PROTOCOLS.length}
+              </span>
+              <span className="drill-done-label">locked in</span>
+            </div>
+            <div className="drill-done-stat">
+              <span className="drill-done-val">
+                {Math.max(0, answered - roundMissed.length)}/{answered}
+              </span>
+              <span className="drill-done-label">right first try</span>
             </div>
             {missed.size > 0 && (
               <div className="drill-done-stat">
                 <span className="drill-done-val">{missed.size}</span>
-                <span className="drill-done-label">needed review</span>
+                <span className="drill-done-label">missed at least once</span>
               </div>
             )}
             {hinted.size > 0 && (
@@ -237,16 +278,51 @@ export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
               </div>
             )}
           </div>
-          {missed.size === 0 ? (
-            <p>Clean sweep. No protocols needed a second look.</p>
-          ) : (
+
+          <div className="drill-track">
+            <div className="drill-track-fill" style={{ width: `${(masteredCount / PROTOCOLS.length) * 100}%` }} />
+          </div>
+
+          {finished ? (
             <p>
-              You cleared all {missed.size} missed {missed.size === 1 ? 'protocol' : 'protocols'} in review.
-              Come back in Hard mode to lock them in without the options.
+              Every protocol answered right twice in a row. Switch to Hard mode and run it again to prove you can
+              produce them without the options in front of you.
             </p>
+          ) : (
+            <>
+              {roundMissed.length > 0 ? (
+                <>
+                  <p>
+                    You missed {roundMissed.length} {roundMissed.length === 1 ? 'protocol' : 'protocols'} in this round.
+                    {roundMissed.length === 1 ? ' It came ' : ' They came '}back before the round ended, and anything
+                    you miss has to come back right twice before it stops appearing.
+                  </p>
+                  <div className="drill-missed-chips">
+                    {roundMissed.map((i) => (
+                      <span className="drill-missed-chip" key={i}>
+                        {PROTOCOLS[i].abbr}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p>
+                  Clean round. The next batch steps up to {nextSize} {nextSize === PROTOCOLS.length ? '(the whole set)' : 'cards'}.
+                </p>
+              )}
+              <p className="drill-remaining">
+                {remaining} {remaining === 1 ? 'protocol' : 'protocols'} still to lock in.
+              </p>
+            </>
           )}
+
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="big-btn" onClick={resetSession}>
+            {!finished && (
+              <button className="big-btn" onClick={startNextRound}>
+                Start round {roundNo + 1} &rarr;
+              </button>
+            )}
+            <button className={finished ? 'big-btn' : 'big-btn ghost'} onClick={resetSession}>
               Start over
             </button>
             {onBack && (
@@ -273,11 +349,7 @@ export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
     { key: 'transport', label: 'Transport', fieldOpts: opts?.transports ?? [], placeholder: 'TCP, UDP, or TCP and UDP' },
   ];
 
-  const isLastMain = phase === 'main' && pos === TOTAL - 1;
-  const progressLabel =
-    phase === 'review'
-      ? `Review: ${reviewQueue.length} remaining`
-      : `${pos}/${TOTAL} completed`;
+  const progressLabel = `Round ${roundNo} \u00b7 card ${qPos + 1} of ${queue.length} \u00b7 ${masteredCount}/${TOTAL} locked in`;
 
   return (
     <div className="study">
@@ -329,6 +401,7 @@ export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
       </div>
 
       <div className="pbq-card">
+        {isRedo && <div className="drill-redo">Second look. Answer it correctly to move on.</div>}
         <div className="drill-abbr">{protocol!.abbr}</div>
 
         <div className="match-rows">
@@ -427,8 +500,13 @@ export function PortDrill({ onBack }: { onBack?: () => void } = {}) {
             )}
             <div className="pbq-submit" style={{ marginTop: 14 }}>
               <button className="big-btn" onClick={handleNext}>
-                {isLastMain ? 'Finish' : 'Next →'}
+                {anyWrong ? 'Try it again \u2192' : qPos + 1 >= queue.length ? 'End the round' : 'Next \u2192'}
               </button>
+              {anyWrong && (
+                <span className="pbq-submit-hint">
+                  You answer this one again right now, and it comes back before the round ends.
+                </span>
+              )}
             </div>
           </>
         )}

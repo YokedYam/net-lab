@@ -81,7 +81,7 @@ interface DrillMeta {
 
 const DRILLS: DrillMeta[] = [
   { id: 'topology-placement-drill', title: 'Topology Placement PBQ', domain: '1.0', type: 'place', blurb: 'place firewall, switch, WAP, servers on the diagram', accent: '#fb923c', kind: 'Exam PBQ' },
-  { id: 'port-drill', title: 'Port & Protocol Drill', domain: '1.0', type: 'sort', blurb: 'match 16 protocols to their ports', accent: '#3b82f6', kind: 'Drill' },
+  { id: 'port-drill', title: 'Port & Protocol Drill', domain: '1.0', type: 'sort', blurb: 'rounds of 5, miss one and it comes straight back, until all 16 stick', accent: '#3b82f6', kind: 'Drill' },
   { id: 'cidr-sizing-drill', title: 'CIDR Sizing Drill', domain: '1.0', type: 'subnet', blurb: 'pick the best-fit subnet for a host count', accent: '#14b8a6', kind: 'Drill' },
   { id: 'subnet-design-drill', title: 'Subnet Design PBQ', domain: '1.0', type: 'subnet', blurb: 'allocate office networks from a /24', accent: '#8b5cf6', kind: 'Exam PBQ' },
   { id: 'subnetting-guide', title: 'Subnetting Shortcut Guide', domain: '1.0', type: 'subnet', blurb: '/25 to /30, network and broadcast', accent: '#facc15', kind: 'Guide' },

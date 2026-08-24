@@ -77,6 +77,10 @@ export const changelog: Release[] = [
       },
       {
         type: 'changed',
+        text: 'The Port and Protocol Drill now works like a flashcard app. You get rounds of 5, a miss puts that card straight back in front of you before anything else moves and queues it again for the end of the round, and a protocol only retires once you have answered it right (twice, if you ever missed it). Clean rounds step the batch up to 8 and then to all 16. Progress lives in the session only, so a refresh starts you over.',
+      },
+      {
+        type: 'changed',
         text: 'The PBQ home is now grouped by what you actually do in each task (exam simulations, diagram placement, configuration, troubleshooting, subnetting, matching and sorting, written recall) instead of by exam domain. Every tile still shows the domain it covers.',
       },
       {
