@@ -9,6 +9,9 @@ import { VlanAssignDrill } from './VlanAssignDrill';
 import { TshootConsoleDrill } from './TshootConsoleDrill';
 import { FirewallAclDrill } from './FirewallAclDrill';
 import { WirelessChannelDrill } from './WirelessChannelDrill';
+import { ExamConsoleDrill } from './ExamConsoleDrill';
+import { FirewallRuleBuilderDrill } from './FirewallRuleBuilderDrill';
+import { WireOrderDrill } from './WireOrderDrill';
 import type { Pbq, MatchPbq, CategorizePbq, SubnetPbq, OrderPbq, RecallPbq, TeachbackPbq } from '../pbqData';
 import { DOMAINS, domainName, subnetFacts, sameIp, sameNum } from '../study';
 import type { DomainId } from '../study';
@@ -42,26 +45,54 @@ const KIND_LABEL: Record<Pbq['kind'], string> = {
 // The interactive drills (their own components, opened by activeId), tagged with
 // the exam domain they belong to so they slot into the right dropdown. "Exam PBQ"
 // marks the full-screen simulations that mirror the real performance-based items.
+// PBQs are grouped by what you actually do in them rather than by domain,
+// because the interaction is what you practise. The domain still rides along
+// on each tile.
+type PbqType = 'sim' | 'place' | 'config' | 'tshoot' | 'subnet' | 'sort' | 'recall';
+
+const TYPES: { id: PbqType; name: string; blurb: string; color: string }[] = [
+  { id: 'sim', name: 'Exam simulations', blurb: 'full replicas of the real performance-based interface', color: '#38bdf8' },
+  { id: 'place', name: 'Diagram placement', blurb: 'drop devices onto a network diagram', color: '#fb923c' },
+  { id: 'config', name: 'Configuration tasks', blurb: 'set switchports, channels and firewall rules', color: '#f472b6' },
+  { id: 'tshoot', name: 'Troubleshooting', blurb: 'read command output and name the fault', color: '#34d399' },
+  { id: 'subnet', name: 'Subnetting', blurb: 'carve networks, size them, check your math', color: '#a78bfa' },
+  { id: 'sort', name: 'Matching and sorting', blurb: 'pair them up, bucket them, put them in order', color: '#22d3ee' },
+  { id: 'recall', name: 'Written recall', blurb: 'type the answer from memory', color: '#facc15' },
+];
+
+const PBQ_KIND_TYPE: Record<Pbq['kind'], PbqType> = {
+  match: 'sort',
+  categorize: 'sort',
+  order: 'sort',
+  subnet: 'subnet',
+  recall: 'recall',
+  teachback: 'recall',
+};
+
 interface DrillMeta {
   id: string;
   title: string;
   domain: DomainId;
+  type: PbqType;
   blurb: string;
   accent: string;
   kind: string;
 }
 
 const DRILLS: DrillMeta[] = [
-  { id: 'topology-placement-drill', title: 'Topology Placement PBQ', domain: '1.0', blurb: 'place firewall, switch, WAP, servers on the diagram', accent: '#fb923c', kind: 'Exam PBQ' },
-  { id: 'port-drill', title: 'Port & Protocol Drill', domain: '1.0', blurb: 'match 16 protocols to their ports', accent: '#3b82f6', kind: 'Drill' },
-  { id: 'cidr-sizing-drill', title: 'CIDR Sizing Drill', domain: '1.0', blurb: 'pick the best-fit subnet for a host count', accent: '#14b8a6', kind: 'Drill' },
-  { id: 'subnet-design-drill', title: 'Subnet Design PBQ', domain: '1.0', blurb: 'allocate office networks from a /24', accent: '#8b5cf6', kind: 'Exam PBQ' },
-  { id: 'subnetting-guide', title: 'Subnetting Shortcut Guide', domain: '1.0', blurb: '/25 to /30, network and broadcast', accent: '#facc15', kind: 'Guide' },
-  { id: 'vlan-assign-drill', title: 'VLAN Port Assignment PBQ', domain: '2.0', blurb: 'tag switchports: access, trunk, or unused', accent: '#22d3ee', kind: 'Exam PBQ' },
-  { id: 'wireless-channel-drill', title: 'Wireless Channel Plan PBQ', domain: '2.0', blurb: 'assign non-overlapping 2.4GHz channels', accent: '#a78bfa', kind: 'Exam PBQ' },
-  { id: 'firewall-acl-drill', title: 'Firewall ACL PBQ', domain: '4.0', blurb: 'permit or deny each rule under least privilege', accent: '#fb7185', kind: 'Exam PBQ' },
-  { id: 'dmz-placement-drill', title: 'Screened Subnet (DMZ) PBQ', domain: '4.0', blurb: 'public servers in the DMZ, sensitive data inside', accent: '#f87171', kind: 'Exam PBQ' },
-  { id: 'tshoot-console-drill', title: 'Troubleshooting Console PBQ', domain: '5.0', blurb: 'read ipconfig/ping/nslookup, name the fault', accent: '#34d399', kind: 'Exam PBQ' },
+  { id: 'topology-placement-drill', title: 'Topology Placement PBQ', domain: '1.0', type: 'place', blurb: 'place firewall, switch, WAP, servers on the diagram', accent: '#fb923c', kind: 'Exam PBQ' },
+  { id: 'port-drill', title: 'Port & Protocol Drill', domain: '1.0', type: 'sort', blurb: 'match 16 protocols to their ports', accent: '#3b82f6', kind: 'Drill' },
+  { id: 'cidr-sizing-drill', title: 'CIDR Sizing Drill', domain: '1.0', type: 'subnet', blurb: 'pick the best-fit subnet for a host count', accent: '#14b8a6', kind: 'Drill' },
+  { id: 'subnet-design-drill', title: 'Subnet Design PBQ', domain: '1.0', type: 'subnet', blurb: 'allocate office networks from a /24', accent: '#8b5cf6', kind: 'Exam PBQ' },
+  { id: 'subnetting-guide', title: 'Subnetting Shortcut Guide', domain: '1.0', type: 'subnet', blurb: '/25 to /30, network and broadcast', accent: '#facc15', kind: 'Guide' },
+  { id: 'vlan-assign-drill', title: 'VLAN Port Assignment PBQ', domain: '2.0', type: 'config', blurb: 'tag switchports: access, trunk, or unused', accent: '#22d3ee', kind: 'Exam PBQ' },
+  { id: 'wireless-channel-drill', title: 'Wireless Channel Plan PBQ', domain: '2.0', type: 'config', blurb: 'assign non-overlapping 2.4GHz channels', accent: '#a78bfa', kind: 'Exam PBQ' },
+  { id: 'firewall-acl-drill', title: 'Firewall ACL PBQ', domain: '4.0', type: 'config', blurb: 'permit or deny each rule under least privilege', accent: '#fb7185', kind: 'Exam PBQ' },
+  { id: 'dmz-placement-drill', title: 'Screened Subnet (DMZ) PBQ', domain: '4.0', type: 'place', blurb: 'public servers in the DMZ, sensitive data inside', accent: '#f87171', kind: 'Exam PBQ' },
+  { id: 'tshoot-console-drill', title: 'Troubleshooting Console PBQ', domain: '5.0', type: 'tshoot', blurb: 'read ipconfig/ping/nslookup, name the fault', accent: '#34d399', kind: 'Exam PBQ' },
+  { id: 'wire-order-drill', title: 'T568A / T568B Wiring Sim', domain: '1.0', type: 'sim', blurb: 'order the pairs on both ends of a crossover cable', accent: '#f97316', kind: 'Exam sim' },
+  { id: 'firewall-builder-drill', title: 'Firewall Rule Builder Sim', domain: '4.0', type: 'sim', blurb: 'write the rule set from scratch, not just permit or deny', accent: '#ef4444', kind: 'Exam sim' },
+  { id: 'exam-console-drill', title: 'Network Troubleshooting Sim', domain: '5.0', type: 'sim', blurb: 'live command prompt, browser and router ACL you can actually break', accent: '#38bdf8', kind: 'Exam sim' },
 ];
 
 // Normalize a typed answer for forgiving comparison.
@@ -242,6 +273,42 @@ export function PbqMode({
     );
   }
 
+  if (activeId === 'exam-console-drill') {
+    return (
+      <ExamConsoleDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
+  if (activeId === 'firewall-builder-drill') {
+    return (
+      <FirewallRuleBuilderDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
+  if (activeId === 'wire-order-drill') {
+    return (
+      <WireOrderDrill
+        onBack={() => {
+          setActiveId(null);
+          setGen(null);
+          setGenErr('');
+        }}
+      />
+    );
+  }
+
   if (activeId === 'wireless-channel-drill') {
     return (
       <WirelessChannelDrill
@@ -256,10 +323,10 @@ export function PbqMode({
 
   if (!pbq) {
     const openDrill = (id: string) => { setActiveId(id); setGen(null); setGenErr(''); };
-    const groups = DOMAINS.map((d) => ({
-      domain: d,
-      drills: DRILLS.filter((dr) => dr.domain === d.id),
-      items: PBQS.filter((p) => p.domain === d.id),
+    const groups = TYPES.map((t) => ({
+      type: t,
+      drills: DRILLS.filter((dr) => dr.type === t.id),
+      items: PBQS.filter((p) => PBQ_KIND_TYPE[p.kind] === t.id),
     })).filter((g) => g.drills.length > 0 || g.items.length > 0);
 
     return (
@@ -267,24 +334,22 @@ export function PbqMode({
         <div className="study-intro wide">
           <h1>Performance-Based Questions</h1>
           <p className="study-lead">
-            The hands-on part of the exam, grouped by the five N10-009 domains. Tiles marked{' '}
-            <b>Exam PBQ</b> mirror the real performance-based interface: place devices on a diagram,
-            tag switchports, set firewall rules, plan wireless channels, or work a troubleshooting
-            console. The rest are quick drills and a subnetting guide. Everything is graded with a
-            breakdown of exactly what to review.
+            The hands-on part of the exam, grouped by what you actually do in each one. Tiles marked{' '}
+            <b>Exam sim</b> are full replicas of the real performance-based interface, right down to
+            the chrome. <b>Exam PBQ</b> tiles are the same kind of task in this site's theme. The rest
+            are quick drills and a subnetting guide. Every tile shows the domain it covers, and
+            everything is graded with a breakdown of exactly what to review.
           </p>
 
           {groups.map((g, gi) => {
             const count = g.drills.length + g.items.length;
             return (
-              <details key={g.domain.id} className="pbq-cat" open={gi === 0}>
-                <summary className="pbq-cat-head" style={{ '--accent': g.domain.color } as React.CSSProperties}>
-                  <span className="pbq-cat-dot" style={{ background: g.domain.color }} />
-                  <span className="pbq-cat-name">
-                    {g.domain.id} {g.domain.name}
-                  </span>
+              <details key={g.type.id} className="pbq-cat" open={gi === 0}>
+                <summary className="pbq-cat-head" style={{ '--accent': g.type.color } as React.CSSProperties}>
+                  <span className="pbq-cat-dot" style={{ background: g.type.color }} />
+                  <span className="pbq-cat-name">{g.type.name}</span>
                   <span className="pbq-cat-meta">
-                    {g.domain.weight}% exam &middot; {count} {count === 1 ? 'task' : 'tasks'}
+                    {g.type.blurb} &middot; {count} {count === 1 ? 'task' : 'tasks'}
                   </span>
                 </summary>
                 <div className="pbq-grid">
@@ -298,12 +363,13 @@ export function PbqMode({
                       <span className="pbq-kind">{dr.kind}</span>
                       <span className="pbq-tile-title">{dr.title}</span>
                       <span className="pbq-tile-domain" style={{ color: dr.accent }}>
-                        {dr.blurb}
+                        {dr.domain} {domainName(dr.domain)}
                       </span>
+                      <span className="pbq-tile-blurb">{dr.blurb}</span>
                     </button>
                   ))}
                   {g.items.map((p) => {
-                    const accent = g.domain.color;
+                    const accent = g.type.color;
                     return (
                       <button key={p.id} className="pbq-tile" onClick={() => { setActiveId(p.id); setGen(null); setGenErr(''); }} style={{ '--accent': accent } as React.CSSProperties}>
                         <span className="pbq-kind">{KIND_LABEL[p.kind]}</span>

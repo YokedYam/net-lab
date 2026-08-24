@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { EXAM_BANK } from '../examData';
+import { drawFresh, shuffleAllChoices } from '../shuffle';
 import type { QuizQuestion } from '../quizData';
 import { DOMAINS, domainName } from '../study';
 import { explainMissedExamQuestion } from '../ai';
@@ -12,15 +13,6 @@ const EXAM_SECONDS = 90 * 60;
 type Phase = 'intro' | 'active' | 'results';
 type AiNotes = Record<number, string>;
 type AiErrors = Record<number, string>;
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 function formatTime(seconds: number): string {
   const safe = Math.max(0, seconds);
@@ -43,7 +35,9 @@ export function ExamSim({ onExit }: { onExit?: () => void }) {
   const q = questions[pos];
 
   const startExam = () => {
-    const next = shuffle(EXAM_BANK).slice(0, EXAM_SIZE);
+    // Pull questions the bank has not served yet, then randomise which slot the
+    // correct answer sits in so the position is never a tell.
+    const next = shuffleAllChoices(drawFresh(EXAM_BANK, EXAM_SIZE, 'exam'));
     setQuestions(next);
     setAnswers(Array(next.length).fill(null));
     setPos(0);

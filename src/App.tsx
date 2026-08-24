@@ -33,6 +33,8 @@ import type { SidebarTab } from './components/Toolbar';
 import { DetailsPanel } from './components/DetailsPanel';
 import { EventLog } from './components/EventLog';
 import { HelpModal } from './components/HelpModal';
+import { WhatsNew } from './components/WhatsNew';
+import { CURRENT_VERSION } from './changelog';
 import { PacketFlight } from './components/PacketFlight';
 import { DemoFlight } from './components/DemoFlight';
 import { DemoAnnotations } from './components/DemoAnnotations';
@@ -268,6 +270,7 @@ export default function App() {
   const [log, setLog] = useState<LogEntry[]>(WELCOME);
   const [flight, setFlight] = useState<{ plan: PingPlan; points: Point[]; runId: number } | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [cam, setCam] = useState<Camera>({ x: 0, y: 0, k: 1 });
   const [task, setTask] = useState<string | null>(null);
   const [demo, setDemo] = useState<DemoState | null>(null);
@@ -908,6 +911,13 @@ export default function App() {
             </div>
           )}
           <SessionTimer />
+          <button
+            className="btn version-pill"
+            onClick={() => setShowWhatsNew(true)}
+            title="See what changed in this build"
+          >
+            {CURRENT_VERSION.display}
+          </button>
           <button className="btn accent" onClick={() => setShowHelp(true)}>
             Help
           </button>
@@ -1108,6 +1118,7 @@ export default function App() {
       </div>
       )}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+      {showWhatsNew && <WhatsNew onClose={() => setShowWhatsNew(false)} />}
       {mission &&
         (() => {
           const mis = missionById(mission.id);

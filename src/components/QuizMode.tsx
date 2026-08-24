@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { EASY_QUIZ, MEDIUM_QUIZ } from '../quizData';
+import { drawFresh, shuffleAllChoices } from '../shuffle';
 import type { QuizDifficulty, QuizQuestion } from '../quizData';
 import { DOMAINS, domainName } from '../study';
 import type { DomainId } from '../study';
@@ -34,13 +35,14 @@ const DIFFICULTIES: DifficultyOption[] = [
 
 const bankFor = (difficulty: QuizDifficulty) => (difficulty === 'easy' ? EASY_QUIZ : MEDIUM_QUIZ);
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+// Questions you have not seen yet come first, and every question gets its
+// choices permuted so the correct answer is not parked in the same slot.
+function buildQueue<T extends { id: string; choices: string[]; answer: number }>(
+  pool: readonly T[],
+  difficulty: string,
+  filter: string
+): T[] {
+  return shuffleAllChoices(drawFresh(pool, pool.length, `quiz.${difficulty}.${filter}`));
 }
 
 export function QuizMode({ onResource }: { onResource: (conceptId: string) => void }) {
@@ -67,7 +69,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
   );
 
   const start = useCallback(() => {
-    setQueue(shuffle(pool));
+    setQueue(buildQueue(pool, difficulty, filter));
     setPos(0);
     setRound(1);
     setPicked(null);
@@ -105,7 +107,7 @@ export function QuizMode({ onResource }: { onResource: (conceptId: string) => vo
     setPicked(null);
     setGenErr('');
     if (pos + 1 >= queue.length) {
-      setQueue(shuffle(pool));
+      setQueue(buildQueue(pool, difficulty, filter));
       setPos(0);
       setRound((r) => r + 1);
     } else {
